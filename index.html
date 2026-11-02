@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Dhalaibol — Local Football Platform</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f8;
+      color: #17202a;
+      padding-bottom: 80px;
+    }
+
+    .header {
+      background: #0b7a3b;
+      color: white;
+      padding: 18px 18px 22px;
+      position: relative;
+    }
+
+    .brand {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .tagline {
+      font-size: 13px;
+      margin-top: 5px;
+      opacity: 0.9;
+    }
+
+    .location {
+      margin-top: 16px;
+      background: rgba(255,255,255,0.14);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 20px 0 10px;
+    }
+
+    .section-title h2 {
+      font-size: 19px;
+    }
+
+    .section-title a {
+      color: #0b7a3b;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .live-card {
+      background: white;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+      border-left: 5px solid #e53935;
+    }
+
+    .live-label {
+      color: #e53935;
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 14px;
+    }
+
+    .teams {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+    }
+
+    .team {
+      width: 40%;
+    }
+
+    .team-logo {
+      width: 54px;
+      height: 54px;
+      margin: auto;
+      border-radius: 50%;
+      background: #e8f5e9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 25px;
+    }
+
+    .team-name {
+      font-size: 14px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .score {
+      font-size: 31px;
+      font-weight: 800;
+    }
+
+    .match-time {
+      font-size: 12px;
+      color: #e53935;
+      margin-top: 4px;
+    }
+
+    .match-button {
+      width: 100%;
+      margin-top: 17px;
+      padding: 11px;
+      border: none;
+      border-radius: 10px;
+      background: #0b7a3b;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .tournament-card {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 10px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+    }
+
+    .tournament-name {
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    .tournament-info {
+      color: #687078;
+      font-size: 13px;
+      margin-top: 7px;
+    }
+
+    .status {
+      display: inline-block;
+      margin-top: 12px;
+      background: #e8f5e9;
+      color: #0b7a3b;
+      padding: 5px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .match-list {
+      background: white;
+      border-radius: 15px;
+      padding: 14px;
+      margin-top: 9px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    }
+
+    .match-info strong {
+      font-size: 14px;
+    }
+
+    .match-info p {
+      color: #777;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .match-status {
+      font-size: 12px;
+      font-weight: bold;
+      color: #0b7a3b;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .quick-card {
+      background: white;
+      border-radius: 15px;
+      padding: 18px 12px;
+      text-align: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .quick-icon {
+      font-size: 25px;
+      margin-bottom: 8px;
+    }
+
+    .history-box {
+      background: #10251a;
+      color: white;
+      padding: 20px;
+      border-radius: 18px;
+      margin-top: 22px;
+    }
+
+    .history-box h3 {
+      font-size: 19px;
+      margin-bottom: 8px;
+    }
+
+    .history-box p {
+      font-size: 13px;
+      line-height: 1.6;
+      opacity: 0.88;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 68px;
+      background: white;
+      border-top: 1px solid #ddd;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .nav-item {
+      text-align: center;
+      color: #777;
+      font-size: 11px;
+    }
+
+    .nav-item.active {
+      color: #0b7a3b;
+      font-weight: bold;
+    }
+
+    .nav-icon {
+      font-size: 21px;
+      margin-bottom: 3px;
+    }
+
+    @media (min-width: 700px) {
+      .header {
+        padding-left: calc((100% - 700px) / 2 + 16px);
+        padding-right: calc((100% - 700px) / 2 + 16px);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="header">
+    <div class="brand">⚽ DHALAIBOL</div>
+    <div class="tagline">
+      Local Football • Tournaments • Teams • Players • History
+    </div>
+
+    <div class="location">
+      📍 Panskura, Purba Medinipur
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- LIVE MATCH -->
+    <div class="section-title">
+      <h2>🔴 Live Match</h2>
+      <a href="#">View All</a>
+    </div>
+
+    <div class="live-card">
+
+      <div class="live-label">
+        ● LIVE NOW
+      </div>
+
+      <div class="teams">
+
+        <div class="team">
+          <div class="team-logo">⚽</div>
+          <div class="team-name">Happy Boys</div>
+        </div>
+
+        <div>
+          <div class="score">2 - 1</div>
+          <div class="match-time">2nd Half • 14:32</div>
+        </div>
+
+        <div class="team">
+          <div class="team-logo">⚽</div>
+          <div class="team-name">Kendruwara</div>
+        </div>
+
+      </div>
+
+      <button class="match-button">
+        View Live Match
+      </button>
+
+    </div>
+
+
+    <!-- TOURNAMENT -->
+    <div class="section-title">
+      <h2>🏆 Ongoing Tournament</h2>
+      <a href="#">See All</a>
+    </div>
+
+    <div class="tournament-card">
+
+      <div class="tournament-name">
+        Panskura Challenge Cup 2026
+      </div>
+
+      <div class="tournament-info">
+        📍 Panskura • 16 Teams
+      </div>
+
+      <div class="tournament-info">
+        🏟️ Knockout Tournament
+      </div>
+
+      <span class="status">
+        LIVE TOURNAMENT
+      </span>
+
+    </div>
+
+
+    <!-- TODAY'S MATCHES -->
+    <div class="section-title">
+      <h2>📅 Today's Matches</h2>
+      <a href="#">View All</a>
+    </div>
+
+    <div class="match-list">
+      <div class="match-info">
+        <strong>Green Star vs Royal Club</strong>
+        <p>8:00 PM • Panskura</p>
+      </div>
+
+      <div class="match-status">
+        UPCOMING
+      </div>
+    </div>
+
+    <div class="match-list">
+      <div class="match-info">
+        <strong>United Boys vs Milan Club</strong>
+        <p>9:00 PM • Moyna</p>
+      </div>
+
+      <div class="match-status">
+        UPCOMING
+      </div>
+    </div>
+
+
+    <!-- QUICK ACCESS -->
+    <div class="section-title">
+      <h2>Explore Dhalaibol</h2>
+    </div>
+
+    <div class="quick-grid">
+
+      <div class="quick-card">
+        <div class="quick-icon">🏆</div>
+        Tournaments
+      </div>
+
+      <div class="quick-card">
+        <div class="quick-icon">⚽</div>
+        Teams
+      </div>
+
+      <div class="quick-card">
+        <div class="quick-icon">👤</div>
+        Players
+      </div>
+
+      <div class="quick-card">
+        <div class="quick-icon">🧑‍⚖️</div>
+        Referees
+      </div>
+
+    </div>
+
+
+    <!-- HISTORY -->
+    <div class="history-box">
+
+      <h3>মাঠের খেলা শেষ হয়, ইতিহাস নয়।</h3>
+
+      <p>
+        Dhalaibol-এর লক্ষ্য হলো আমাদের local football-এর
+        tournament, team, player, referee এবং match history
+        ডিজিটালভাবে সংরক্ষণ করা।
+      </p>
+
+      <p style="margin-top:10px;">
+        আজকের ম্যাচের তথ্যই আগামী দিনের football history।
+      </p>
+
+    </div>
+
+  </main>
+
+
+  <!-- BOTTOM NAVIGATION -->
+  <nav class="bottom-nav">
+
+    <div class="nav-item active">
+      <div class="nav-icon">🏠</div>
+      Home
+    </div>
+
+    <div class="nav-item">
+      <div class="nav-icon">🔴</div>
+      Live
+    </div>
+
+    <div class="nav-item">
+      <div class="nav-icon">🏆</div>
+      Tournaments
+    </div>
+
+    <div class="nav-item">
+      <div class="nav-icon">⚽</div>
+      Teams
+    </div>
+
+    <div class="nav-item">
+      <div class="nav-icon">🔎</div>
+      Search
+    </div>
+
+  </nav>
+
+</body>
+</html>
