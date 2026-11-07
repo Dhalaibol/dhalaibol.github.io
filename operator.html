@@ -1,0 +1,246 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dhalaibol | Operator Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f1f5f2;color:#17251c;padding-bottom:25px}
+header{background:#075b32;color:white;padding:19px 17px}
+.brand{font-size:23px;font-weight:800}
+.sub{font-size:12px;margin-top:5px;opacity:.85}
+.container{max-width:650px;margin:auto;padding:15px}
+.card{background:white;border-radius:15px;padding:17px;margin-bottom:14px;box-shadow:0 3px 12px #0000000c}
+.section{font-size:15px;font-weight:700;margin-bottom:13px}
+.status{display:inline-block;padding:6px 10px;border-radius:20px;font-size:11px;font-weight:bold;background:#fff1dc;color:#9b5b00}
+.match{background:#fff;border-radius:15px;padding:17px;margin-bottom:14px}
+.match-title{text-align:center;font-size:12px;color:#66736b;margin-bottom:15px}
+.teams{display:flex;align-items:center;justify-content:space-between;text-align:center;gap:8px}
+.team{width:38%;font-weight:bold;font-size:14px}
+.team-icon{font-size:26px;margin-bottom:7px}
+.score{font-size:29px;font-weight:800}
+.timer{text-align:center;background:#102d1d;color:white;padding:19px;border-radius:15px;margin-bottom:14px}
+.clock{font-size:42px;font-weight:800;font-variant-numeric:tabular-nums;margin:9px}
+.period{font-size:12px;color:#c5e4cf}
+.warning{font-size:11px;color:#ffdb83;margin-top:9px}
+button{border:0;border-radius:10px;padding:13px;font-size:14px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.primary{background:#08783e;color:white}
+.secondary{background:#e6f2e9;color:#075b32}
+.danger{background:#ffebeb;color:#b32626}
+.event-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.event-grid button{background:#edf5ef;color:#145a32}
+.note{font-size:12px;color:#6a756d;line-height:1.5}
+.field{width:100%;padding:12px;border:1px solid #d7dfd9;border-radius:9px;margin-top:8px;font-size:14px;background:#fff}
+.event-row{padding:11px 0;border-bottom:1px solid #edf0ed;font-size:13px}
+.footer{text-align:center;color:#7c877f;font-size:11px;padding:12px}
+.demo{background:#fff4d9;color:#77500a;padding:11px;border-radius:10px;font-size:12px;line-height:1.5;margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">⚽ DHALAIBOL</div>
+  <div class="sub">MATCH OPERATOR PANEL</div>
+</header>
+
+<main class="container">
+
+  <div class="demo">
+    <strong>DEMO PREVIEW</strong><br>
+    This is a visual prototype. Match controls are not connected to the live database yet.
+  </div>
+
+  <div class="card">
+    <div class="section">Operator Information</div>
+    <div><strong>Operator:</strong> Not logged in</div>
+    <div class="note" style="margin-top:7px">Your assigned match will appear here after secure login.</div>
+    <div style="margin-top:12px"><span class="status">WAITING FOR ASSIGNMENT</span></div>
+  </div>
+
+  <section class="match">
+    <div class="match-title">ASSIGNED MATCH • DEMO</div>
+    <div class="teams">
+      <div class="team">
+        <div class="team-icon">⚽</div>
+        <div>Home Team</div>
+      </div>
+      <div>
+        <div class="score"><span id="homeScore">0</span> - <span id="awayScore">0</span></div>
+        <div class="note">LIVE SCORE</div>
+      </div>
+      <div class="team">
+        <div class="team-icon">⚽</div>
+        <div>Away Team</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="timer">
+    <div class="period" id="period">FIRST HALF</div>
+    <div class="clock" id="clock">00:00</div>
+    <div class="period" id="clockStatus">DEMO CLOCK • STOPPED</div>
+    <div class="warning">Half-time warning will be connected later</div>
+  </section>
+
+  <div class="card">
+    <div class="section">Match Clock Controls</div>
+    <div class="controls">
+      <button class="primary" id="startBtn" onclick="startClock()">▶ Start</button>
+      <button class="secondary" id="pauseBtn" onclick="pauseClock()" disabled>Ⅱ Pause</button>
+      <button class="secondary" id="halfBtn" onclick="endHalf()" disabled>Half Time</button>
+      <button class="primary" id="secondBtn" onclick="secondHalf()" disabled>Second Half</button>
+    </div>
+    <button class="danger" id="endBtn" style="width:100%;margin-top:9px" onclick="endMatch()" disabled>End Match</button>
+  </div>
+
+  <div class="card">
+    <div class="section">Match Events</div>
+    <div class="note" style="margin-bottom:13px">Demo controls only. Real player and team selection will come from confirmed lineups.</div>
+    <div class="event-grid">
+      <button onclick="addGoal('Home')">⚽ Home Goal</button>
+      <button onclick="addGoal('Away')">⚽ Away Goal</button>
+      <button onclick="addEvent('Yellow Card')">🟨 Yellow Card</button>
+      <button onclick="addEvent('Red Card')">🟥 Red Card</button>
+      <button onclick="addEvent('Substitution')">🔄 Substitution</button>
+      <button onclick="addEvent('Own Goal')">⚽ Own Goal</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section">Match Event Timeline</div>
+    <div id="events"><p class="note">No events recorded in this demo.</p></div>
+  </div>
+
+  <div class="card">
+    <div class="section">Match Information</div>
+    <p class="note">Tournament: Assigned by Admin</p>
+    <p class="note" style="margin-top:7px">Venue: Assigned match venue</p>
+    <p class="note" style="margin-top:7px">Referee: Match official</p>
+  </div>
+
+  <div class="card">
+    <div class="section">Operator Preparation</div>
+    <p class="note">✓ Mobile battery charged</p>
+    <p class="note" style="margin-top:7px">✓ Stable internet connection</p>
+    <p class="note" style="margin-top:7px">✓ Power bank ready</p>
+  </div>
+
+</main>
+
+<div class="footer">Dhalaibol • Local Football Platform</div>
+
+<script>
+let seconds=0;
+let running=false;
+let interval=null;
+let half=1;
+let home=0,away=0;
+
+function renderClock(){
+  let m=Math.floor(seconds/60);
+  let s=seconds%60;
+  document.getElementById("clock").textContent=
+    String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+}
+
+function updateButtons(){
+  document.getElementById("startBtn").disabled=running||half>1;
+  document.getElementById("pauseBtn").disabled=!running;
+  document.getElementById("halfBtn").disabled=!running||half!==1;
+  document.getElementById("secondBtn").disabled=running||half!==2;
+  document.getElementById("endBtn").disabled=!running||half!==2;
+}
+
+function startClock(){
+  if(running||half>1)return;
+  running=true;
+  document.getElementById("clockStatus").textContent="DEMO CLOCK • RUNNING";
+  interval=setInterval(()=>{
+    seconds++;
+    renderClock();
+  },1000);
+  updateButtons();
+}
+
+function pauseClock(){
+  if(!running)return;
+  clearInterval(interval);
+  running=false;
+  document.getElementById("clockStatus").textContent="DEMO CLOCK • PAUSED";
+  updateButtons();
+}
+
+function endHalf(){
+  if(!running||half!==1)return;
+  clearInterval(interval);
+  running=false;
+  half=2;
+  document.getElementById("period").textContent="HALF TIME";
+  document.getElementById("clockStatus").textContent="DEMO CLOCK • HALF TIME";
+  document.getElementById("secondBtn").disabled=false;
+  document.getElementById("halfBtn").disabled=true;
+  updateButtons();
+}
+
+function secondHalf(){
+  if(half!==2||running)return;
+  seconds=0;
+  renderClock();
+  document.getElementById("period").textContent="SECOND HALF";
+  document.getElementById("clockStatus").textContent="DEMO CLOCK • RUNNING";
+  running=true;
+  interval=setInterval(()=>{
+    seconds++;
+    renderClock();
+  },1000);
+  updateButtons();
+}
+
+function endMatch(){
+  if(!running||half!==2)return;
+  clearInterval(interval);
+  running=false;
+  document.getElementById("clockStatus").textContent="DEMO MATCH • COMPLETED";
+  document.getElementById("period").textContent="FULL TIME";
+  updateButtons();
+}
+
+function addGoal(team){
+  if(!running){
+    alert("Demo: Start the clock first.");
+    return;
+  }
+  if(team==="Home"){
+    home++;
+    document.getElementById("homeScore").textContent=home;
+  }else{
+    away++;
+    document.getElementById("awayScore").textContent=away;
+  }
+  addTimeline(team+" Team Goal");
+}
+
+function addEvent(name){
+  if(!running){
+    alert("Demo: Start the clock first.");
+    return;
+  }
+  addTimeline(name);
+}
+
+function addTimeline(name){
+  const box=document.getElementById("events");
+  if(box.querySelector(".note"))box.innerHTML="";
+  const row=document.createElement("div");
+  row.className="event-row";
+  row.textContent=
+    document.getElementById("clock").textContent+" • "+name;
+  box.prepend(row);
+}
+</script>
+</body>
+</html>
