@@ -308,5 +308,69 @@ document.getElementById("operatorLoginForm").addEventListener("submit", async (e
   }
 });
 </script>
+  <!-- Operator Access Verification -->
+<script>
+async function verifyOperatorAccess() {
+  const message = document.getElementById("loginMessage");
+
+  const { data: sessionData, error: sessionError } =
+    await supabaseClient.auth.getSession();
+
+  if (sessionError || !sessionData.session) {
+    return;
+  }
+
+  const user = sessionData.session.user;
+
+  message.textContent = "Checking Operator account...";
+
+  // Step 1: Verify Operator Role
+  const { data: roleData, error: roleError } =
+    await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "operator")
+      .maybeSingle();
+
+  if (roleError) {
+    message.textContent = "Role verification failed: " + roleError.message;
+    return;
+  }
+
+  if (!roleData) {
+    message.textContent =
+      "Access denied. This account is not registered as an Operator.";
+    return;
+  }
+
+  // Step 2: Find assigned matches
+  const { data: assignments, error: assignmentError } =
+    await supabaseClient
+      .from("operator_assignments")
+      .select("match_id, assigned_at")
+      .eq("operator_id", user.id)
+      .eq("is_active", true);
+
+  if (assignmentError) {
+    message.textContent =
+      "Assignment check failed: " + assignmentError.message;
+    return;
+  }
+
+  if (!assignments || assignments.length === 0) {
+    message.textContent =
+      "Operator verified, but no active match is assigned yet.";
+    return;
+  }
+
+  message.textContent =
+    "Operator verified. Assigned Match ID(s): " +
+    assignments.map(item => item.match_id).join(", ");
+}
+
+// Check access when the page loads
+verifyOperatorAccess();
+</script>
 </body>
 </html>
