@@ -303,8 +303,71 @@ const dashboard = document.getElementById("adminDashboard");
 const loginMessage = document.getElementById("loginMessage");
 const inviteMessage = document.getElementById("inviteMessage");
 const matchSelect = document.getElementById("matchSelect");
+// Club Management Elements
+const clubForm = document.getElementById("clubForm");
+const clubName = document.getElementById("clubName");
+const clubMessage = document.getElementById("clubMessage");
+const clubList = document.getElementById("clubList");
+// Load Clubs from Supabase
+async function loadClubs() {
+  clubList.textContent = "Loading clubs...";
 
+  const { data, error } = await supabaseClient
+    .from("clubs")
+    .select("id, name")
+    .order("name");
 
+  if (error) {
+    clubList.textContent = "Error loading clubs: " + error.message;
+    return;
+  }
+
+  clubList.replaceChildren();
+
+  if (!data || data.length === 0) {
+    clubList.textContent = "No clubs added yet.";
+    return;
+  }
+
+  const ul = document.createElement("ul");
+
+  data.forEach((club) => {
+    const li = document.createElement("li");
+    li.textContent = club.name;
+    ul.appendChild(li);
+  });
+
+  clubList.appendChild(ul);
+}
+
+// Add Club
+clubForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const name = clubName.value.trim();
+
+  if (!name) return;
+
+  const submitButton = clubForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  clubMessage.textContent = "Saving club...";
+
+  const { error } = await supabaseClient
+    .from("clubs")
+    .insert({ name });
+
+  submitButton.disabled = false;
+
+  if (error) {
+    clubMessage.textContent = "Error: " + error.message;
+    return;
+  }
+
+  clubMessage.textContent = "Club added successfully!";
+  clubForm.reset();
+
+  await loadClubs();
+});
 // Admin Login
 
 document.getElementById("loginForm").addEventListener(
@@ -401,7 +464,7 @@ async function checkAdminAccess() {
   loginMessage.textContent = "";
 
   await loadScheduledMatches();
-
+await loadClubs();
 }
 
 
