@@ -51,6 +51,31 @@ button:disabled{opacity:.45;cursor:not-allowed}
 </header>
 
 <main class="container">
+  <!-- Operator Login -->
+<div class="card" id="operatorLogin">
+  <div class="section">Operator Login</div>
+  <p class="note">Enter your registered email address to access your assigned match.</p>
+
+  <form id="operatorLoginForm">
+    <input
+      class="field"
+      type="email"
+      id="operatorEmail"
+      placeholder="Enter your email address"
+      required
+    >
+
+    <button
+      class="primary"
+      type="submit"
+      style="width:100%;margin-top:12px"
+    >
+      Continue
+    </button>
+  </form>
+
+  <p class="note" id="loginMessage" style="margin-top:12px"></p>
+</div>
 
   <div class="demo">
     <strong>DEMO PREVIEW</strong><br>
@@ -259,5 +284,29 @@ const supabaseClient = window.supabase.createClient(
 );
 </script>
 
+  <script>
+document.getElementById("operatorLoginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const email = document.getElementById("operatorEmail").value.trim();
+  const message = document.getElementById("loginMessage");
+
+  message.textContent = "Sending secure login link...";
+
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email: email,
+    options: {
+      shouldCreateUser: false,
+      emailRedirectTo: window.location.href
+    }
+  });
+
+  if (error) {
+    message.textContent = "Login error: " + error.message;
+  } else {
+    message.textContent = "Login link sent. Please check your email.";
+  }
+});
+</script>
 </body>
 </html>
