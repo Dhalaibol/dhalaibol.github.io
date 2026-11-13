@@ -376,7 +376,16 @@ async function loadClubs() {
     clubList.textContent = "Error loading clubs: " + error.message;
     return;
   }
+// Populate Organizer Club Dropdown
+organizerClub.innerHTML =
+  '<option value="">Select Organizer Club</option>';
 
+data.forEach((club) => {
+  const option = document.createElement("option");
+  option.value = club.id;
+  option.textContent = club.name;
+  organizerClub.appendChild(option);
+});
   clubList.replaceChildren();
 
   if (!data || data.length === 0) {
