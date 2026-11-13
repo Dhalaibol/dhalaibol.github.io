@@ -207,7 +207,51 @@ footer {
   <div id="clubList" class="status"></div>
 </div>
 <!-- END CLUB MANAGEMENT -->
+<!-- TOURNAMENT MANAGEMENT -->
+<div class="card">
+  <h2>Tournament Management</h2>
+  <p class="note">Create and manage football tournaments.</p>
 
+  <form id="tournamentForm">
+
+    <label for="tournamentName">Tournament Name</label>
+    <input class="field" type="text" id="tournamentName"
+      placeholder="Enter Tournament Name" required>
+
+    <label for="organizerClub">Organizer Club</label>
+    <select class="field" id="organizerClub" required>
+      <option value="">Select Organizer Club</option>
+    </select>
+
+    <label for="tournamentEdition">Edition</label>
+    <input class="field" type="text" id="tournamentEdition"
+      placeholder="Example: 2026">
+
+    <label for="tournamentLocation">Location</label>
+    <input class="field" type="text" id="tournamentLocation"
+      placeholder="Enter Tournament Location">
+
+    <label for="tournamentStart">Start Date</label>
+    <input class="field" type="date" id="tournamentStart">
+
+    <label for="tournamentEnd">End Date</label>
+    <input class="field" type="date" id="tournamentEnd">
+
+    <label for="matchDuration">Match Duration (Minutes)</label>
+    <input class="field" type="number" id="matchDuration"
+      min="2" placeholder="Example: 40" required>
+
+    <button class="primary" type="submit"
+      style="width:100%;margin-top:12px">
+      Create Tournament
+    </button>
+
+  </form>
+
+  <div id="tournamentMessage" class="status"></div>
+  <div id="tournamentList" class="status"></div>
+</div>
+<!-- END TOURNAMENT MANAGEMENT -->
 
     <!-- Match List -->
     <div class="card">
@@ -303,11 +347,22 @@ const dashboard = document.getElementById("adminDashboard");
 const loginMessage = document.getElementById("loginMessage");
 const inviteMessage = document.getElementById("inviteMessage");
 const matchSelect = document.getElementById("matchSelect");
-// Club Management Elements
+// Club Management ElementstournamentForm.addEventListener
 const clubForm = document.getElementById("clubForm");
 const clubName = document.getElementById("clubName");
 const clubMessage = document.getElementById("clubMessage");
 const clubList = document.getElementById("clubList");
+  // Tournament Management Elements
+const tournamentForm = document.getElementById("tournamentForm");
+const tournamentName = document.getElementById("tournamentName");
+const organizerClub = document.getElementById("organizerClub");
+const tournamentEdition = document.getElementById("tournamentEdition");
+const tournamentLocation = document.getElementById("tournamentLocation");
+const tournamentStart = document.getElementById("tournamentStart");
+const tournamentEnd = document.getElementById("tournamentEnd");
+const matchDuration = document.getElementById("matchDuration");
+const tournamentMessage = document.getElementById("tournamentMessage");
+const tournamentList = document.getElementById("tournamentList");
 // Load Clubs from Supabase
 async function loadClubs() {
   clubList.textContent = "Loading clubs...";
@@ -367,6 +422,51 @@ clubForm.addEventListener("submit", async (event) => {
   clubForm.reset();
 
   await loadClubs();
+});
+  // Create Tournament
+tournamentForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const name = tournamentName.value.trim();
+  const clubId = Number(organizerClub.value);
+  const edition = tournamentEdition.value.trim();
+  const location = tournamentLocation.value.trim();
+  const startDate = tournamentStart.value;
+  const endDate = tournamentEnd.value;
+  const duration = Number(matchDuration.value);
+
+  if (!name || !clubId || !duration) {
+    tournamentMessage.textContent = "Please fill all required fields.";
+    return;
+  }
+
+  const button = tournamentForm.querySelector('button[type="submit"]');
+  button.disabled = true;
+  tournamentMessage.textContent = "Saving tournament...";
+
+  const { error } = await supabaseClient
+    .from("tournaments")
+    .insert({
+      name: name,
+      organizer_club_id: clubId,
+      edition: edition || null,
+      location: location || null,
+      start_date: startDate || null,
+      end_date: endDate || null,
+      match_duration_minutes: duration,
+      status: "upcoming",
+      is_published: false
+    });
+
+  button.disabled = false;
+
+  if (error) {
+    tournamentMessage.textContent = "Error: " + error.message;
+    return;
+  }
+
+  tournamentMessage.textContent = "Tournament created successfully!";
+  tournamentForm.reset();
 });
 // Admin Login
 
