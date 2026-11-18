@@ -46,7 +46,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 <div class="grid"><div><label>Tournament Name *</label><input id="tName" required placeholder="যেমন: Panskura Cup"></div><div><label>Organizer Club *</label><select id="tOrganizer" required></select></div>
 <div><label>Edition / Year</label><input id="tEdition" type="number" placeholder="2027"></div><div><label>Location</label><input id="tLocation" placeholder="Panskura, Purba Medinipur"></div>
 <div><label>Start Date</label><input id="tStart" type="date"></div><div><label>End Date</label><input id="tEnd" type="date"></div>
-<div><label>Entry Fee (প্রতি টিম) ₹</label><input id="tEntry" type="number" min="0" step="0.01" placeholder="যেমন 1000"></div><div><label>আয়োজকের জানানো মোট দলের সংখ্যা (শুধু তথ্য)</label><input id="tReportedTeams" type="number" min="1" step="1" placeholder="যেমন 16"><p class="note">শুধু তথ্য হিসেবে থাকবে; বাস্তব খেলায় অংশগ্রহণ আটকাবে না।</p></div>
+<div><label>Entry Fee (প্রতি টিম) ₹</label><input id="tEntry" type="number" min="0" step="0.01" placeholder="যেমন 1000"></div><div><label>টুর্নামেন্টে ঠিক কতটি দল নেওয়া হবে? *</label><input id="tReportedTeams" type="number" min="1" step="1" required placeholder="যেমন 16"><p class="note">এই সংখ্যাই Dhalaibol-এ দলের নির্দিষ্ট রেজিস্ট্রেশন সীমা। ১৬ দিলে ১৭তম দল যোগ করা যাবে না।</p></div>
 <div><label>Match Duration (মিনিট)</label><input id="tDuration" type="number" min="2" placeholder="যেমন 20"></div><div><label>Half Duration (মিনিট)</label><input id="tHalf" type="number" min="1" placeholder="খালি রাখলে অর্ধেক হবে"></div>
 </div>
 <hr><h3>Prize Distribution (₹)</h3><div class="grid"><div><label>First Prize</label><input id="tFirst" type="number" min="0" placeholder="0"></div><div><label>Second Prize</label><input id="tSecond" type="number" min="0" placeholder="0"></div><div><label>Third Prize</label><input id="tThird" type="number" min="0" placeholder="0"></div><div><label>Semifinalist Prize</label><input id="tSemi" type="text" placeholder="যেমন ₹2,000 each"></div><div><label>Man of the Match Prize</label><input id="tMom" type="text" placeholder="যেমন Trophy / ₹500"></div></div>
@@ -91,7 +91,7 @@ document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>tab(b.dataset.go
 async function loadBase(){
  const [c,t,tm,v,m,po]=await Promise.all([
  db.from("clubs").select("id,name").order("name"),
- db.from("tournaments").select("id,name,organizer_club_id,location,start_date,end_date,entry_fee,first_prize,second_prize,third_prize,semifinalist_prize,man_of_the_match_prize,match_duration_minutes,half_duration_minutes,status,is_published,rules,organizer_reported_team_count").order("created_at",{ascending:false}),
+ db.from("tournaments").select("id,name,organizer_club_id,location,start_date,end_date,entry_fee,first_prize,second_prize,third_prize,semifinalist_prize,man_of_the_match_prize,match_duration_minutes,half_duration_minutes,status,is_published,rules,registration_team_limit").order("created_at",{ascending:false}),
  db.from("teams").select("id,name,club_id,captain_player_id").order("name"),
  db.from("venues").select("id,name,location,address").order("name"),
  db.from("matches").select("id,tournament_id,home_team_id,away_team_id,venue_id,round,match_number,scheduled_at,status,is_published,match_duration_minutes,half_duration_minutes").order("scheduled_at"),
@@ -113,7 +113,7 @@ function renderTournaments(){
  const org=state.clubs.find(c=>String(c.id)===String(t.organizer_club_id));
  const count=state.matches.filter(m=>String(m.tournament_id)===String(t.id)).length;
  const box=document.createElement("div");box.className="item";
- box.innerHTML='<div class="row"><strong>'+esc(t.name)+'</strong><span class="pill '+(t.is_published?"":"gray")+'">'+(t.is_published?"Published":"Draft")+'</span></div><p class="note">'+esc(org?.name||"Organizer not set")+' · '+esc(t.location||"Location pending")+' · '+(t.organizer_reported_team_count??'দলের সংখ্যা জানানো হয়নি')+'টি দল (আয়োজকের তথ্য) · '+count+' matches</p><p class="note">Entry Fee: ₹'+(t.entry_fee??"—")+' · Prize: ₹'+(t.first_prize??"—")+' / ₹'+(t.second_prize??"—")+' / ₹'+(t.third_prize??"—")+'</p><div class="actions"><button class="small secondary" data-publish="'+t.id+'" data-value="'+(!t.is_published)+'">'+(t.is_published?"Unpublish":"Publish")+'</button><button class="small secondary" data-select="'+t.id+'">Manage Teams / Fixtures</button></div>';
+ box.innerHTML='<div class="row"><strong>'+esc(t.name)+'</strong><span class="pill '+(t.is_published?"":"gray")+'">'+(t.is_published?"Published":"Draft")+'</span></div><p class="note">'+esc(org?.name||"Organizer not set")+' · '+esc(t.location||"Location pending")+' · '+(t.organizer_reported_team_count??'দলের সংখ্যা জানানো হয়নি')+'টি দল (নির্ধারিত সীমা) · '+count+' matches</p><p class="note">Entry Fee: ₹'+(t.entry_fee??"—")+' · Prize: ₹'+(t.first_prize??"—")+' / ₹'+(t.second_prize??"—")+' / ₹'+(t.third_prize??"—")+'</p><div class="actions"><button class="small secondary" data-publish="'+t.id+'" data-value="'+(!t.is_published)+'">'+(t.is_published?"Unpublish":"Publish")+'</button><button class="small secondary" data-select="'+t.id+'">Manage Teams / Fixtures</button></div>';
  host.append(box);
  });
  host.querySelectorAll("[data-publish]").forEach(b=>b.onclick=async()=>{const id=Number(b.dataset.publish);const {error}=await db.from("tournaments").update({is_published:b.dataset.value==="true"}).eq("id",id);if(error)return alert(error.message);await loadBase()});
@@ -131,10 +131,10 @@ $("refreshTournaments").onclick=()=>loadBase().catch(e=>msg("tournamentMessage",
 $("teamForm").onsubmit=async e=>{
  e.preventDefault();const btn=$("saveTeam");btn.disabled=true;msg("teamMessage","Adding team...");
  const tid=Number($("teamTournament").value),club=Number($("teamClub").value),name=$("teamName").value.trim();
- const {data:team,error}=await db.from("teams").insert({name,club_id:club}).select("id").single();
+ const tournament=state.tournaments.find(x=>Number(x.id)===tid);if(!tournament||!Number.isInteger(Number(tournament.registration_team_limit))||Number(tournament.registration_team_limit)<1){btn.disabled=false;msg("teamMessage","এই Tournament-এর নির্দিষ্ট দলসংখ্যা আগে সেট করতে হবে।","error");return}const {count:registered,error:countError}=await db.from("tournament_teams").select("id",{count:"exact",head:true}).eq("tournament_id",tid);if(countError){btn.disabled=false;msg("teamMessage",countError.message,"error");return}if(registered>=Number(tournament.registration_team_limit)){btn.disabled=false;msg("teamMessage","রেজিস্ট্রেশন পূর্ণ: এই Tournament-এ ঠিক "+tournament.registration_team_limit+"টি দল নেওয়া হবে।","error");return}const {data:team,error}=await db.from("teams").insert({name,club_id:club}).select("id").single();
  if(error){btn.disabled=false;msg("teamMessage",error.message,"error");return}
  const {error:linkError}=await db.from("tournament_teams").insert({tournament_id:tid,team_id:team.id});
- btn.disabled=false;if(linkError){msg("teamMessage","Team created, but tournament link failed: "+linkError.message,"error");return}
+ btn.disabled=false;if(linkError){await db.from("teams").delete().eq("id",team.id);msg("teamMessage",linkError.message,"error");return}
  msg("teamMessage","Team record saved in Dhalaibol. এখন Player List section থেকে খেলোয়াড়দের তথ্য যোগ করুন।","success");$("teamName").value="";await loadBase();$("rosterTournament").value=tid;await loadRoster();
 };
 $("rosterTournament").onchange=loadRoster;$("refreshTeams").onclick=()=>loadBase().catch(e=>alert(e.message));
