@@ -28,7 +28,7 @@ button{border:0;border-radius:9px;padding:11px 14px;background:var(--green);colo
 <main>
 <section class="card" id="loginCard">
 <h2>Operator Login</h2><p class="note">Admin-এর পাঠানো invitation-এ ব্যবহৃত ইমেইল দিয়ে Secure Magic Link নিন।</p>
-<form id="loginForm"><label>Email Address</label><input id="email" type="email" required placeholder="operator@example.com"><div style="margin-top:12px"><button id="loginBtn" type="submit">Send Secure Login Link</button></div></form><div id="loginMsg" class="msg"></div>
+<form id="loginForm"><label>Invitation-এর ইমেইল</label><input id="email" type="email" required placeholder="operator@example.com"><div style="margin-top:12px"><button id="loginBtn" type="submit">Send Secure Login Link</button></div></form><div id="loginMsg" class="msg"></div><form id="activateForm" class="hidden"><h3>প্রথমবার Operator Account চালু করুন</h3><p class="note">Admin-এর invitation link দিয়ে প্রবেশ করার পর নিজের নতুন password তৈরি করুন। এরপরই Operator Dashboard চালু হবে।</p><label>New Password (কমপক্ষে 10 অক্ষর)</label><input id="newPassword" type="password" minlength="10" autocomplete="new-password" required><label>Confirm Password</label><input id="confirmPassword" type="password" minlength="10" autocomplete="new-password" required><div style="margin-top:12px"><button id="activateBtn" type="submit">Set Password & Activate</button></div></form>
 </section>
 <section id="workspace" class="hidden">
 <div class="card"><div class="row"><div><h2>Operator Workspace</h2><div class="note" id="identity"></div></div><button id="logout" class="secondary small">Sign out</button></div></div>
@@ -56,13 +56,14 @@ async function loginCheck(){
  const {data:{session}}=await db.auth.getSession();if(!session)return;
  state.user=session.user;$("identity").textContent=session.user.email||session.user.id;
  const {data:role,error}=await db.from("user_roles").select("role").eq("user_id",session.user.id).eq("role","operator").maybeSingle();
- if(error||!role){message("loginMsg",error?"Role check failed: "+error.message:"এই account Operator হিসেবে অনুমোদিত নয়।","error");return}
+ if(error){message("loginMsg","Role check failed: "+error.message,"error");return}if(!role){const {data:pending,error:pendingError}=await db.from("operator_assignments").select("id").eq("operator_id",session.user.id).eq("is_active",true).limit(1);if(pendingError||!pending?.length){message("loginMsg",pendingError?.message||"এই account-এ কোনো pending Operator invitation নেই।","error");return}$("loginForm").classList.add("hidden");$("activateForm").classList.remove("hidden");message("loginMsg","Invitation verified. Dashboard চালু করতে password তৈরি করুন।","success");return}
  $("loginCard").classList.add("hidden");$("workspace").classList.remove("hidden");
  await loadAssignments();
 }
 $("loginForm").onsubmit=async e=>{e.preventDefault();$("loginBtn").disabled=true;message("loginMsg","Secure link পাঠানো হচ্ছে...");const {error}=await db.auth.signInWithOtp({email:$("email").value.trim(),options:{shouldCreateUser:false,emailRedirectTo:location.href}});$("loginBtn").disabled=false;message("loginMsg",error?error.message:"ইমেইলে Login Link পাঠানো হয়েছে।",""+(error?"error":"success"))};
 $("logout").onclick=async()=>{await db.auth.signOut();location.reload()};
 db.auth.onAuthStateChange((event)=>{if(event==="SIGNED_IN")setTimeout(()=>loginCheck(),0)});
+$("activateForm").onsubmit=async e=>{e.preventDefault();const password=$("newPassword").value,confirmPassword=$("confirmPassword").value;if(password.length<10){message("loginMsg","Password কমপক্ষে 10 অক্ষরের হতে হবে।","error");return}if(password!==confirmPassword){message("loginMsg","দুটি Password মেলেনি।","error");return}const b=$("activateBtn");b.disabled=true;message("loginMsg","Account নিরাপদভাবে চালু হচ্ছে...");const {error:passwordError}=await db.auth.updateUser({password});if(passwordError){b.disabled=false;message("loginMsg",passwordError.message,"error");return}const {data,error}=await db.functions.invoke("operator-activate",{body:{}});b.disabled=false;if(error||!data?.success){message("loginMsg",error?.message||data?.error||"Activation failed","error");return}message("loginMsg","Password set হয়েছে। Operator Dashboard চালু হচ্ছে...","success");await loginCheck()};
 async function loadAssignments(){
  const {data:a,error}=await db.from("operator_assignments").select("match_id,assigned_at").eq("operator_id",state.user.id).eq("is_active",true);
  if(error){message("loginMsg",error.message,"error");return}
