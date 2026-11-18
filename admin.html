@@ -37,8 +37,13 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 <section id="adminDashboard" class="hidden">
 <div class="card"><div class="row"><div><h2>Admin Workspace</h2><div class="note">Signed in: <strong id="adminIdentity"></strong></div></div><button id="logoutButton" class="secondary small">Sign out</button></div></div>
 <div class="nav">
-<button class="active" data-tab="overview">Overview</button><button data-tab="tournaments">Tournaments</button><button data-tab="teams">Teams & Players</button><button data-tab="fixtures">Fixtures & Draw Results</button><button data-tab="operators">Operator Assignment</button>
+<button class="active" data-tab="overview">Overview</button><button data-tab="clubs">Club Management</button><button data-tab="tournaments">Tournaments</button><button data-tab="teams">Teams & Players</button><button data-tab="fixtures">Fixtures & Draw Results</button><button data-tab="operators">Operator Assignment</button>
 </div>
+<section id="tab-clubs" class="hidden">
+<div class="card"><h2>Club Management</h2><p class="note">এখানে Dhalaibol-এ ক্লাবের নাম নথিভুক্ত ও পরিচালনা করুন। কোনো ক্লাবের Team বা Tournament যুক্ত থাকলে সেটি Delete করা যাবে না।</p>
+<form id="clubForm" class="grid"><div><label>Club Name *</label><input id="clubName" required maxlength="120" placeholder="যেমন: Panskura Sporting Club"></div><div class="actions"><button id="saveClub">Add Club</button><button type="button" class="secondary" id="clearClub">Clear</button></div></form><div id="clubMessage" class="message"></div></div>
+<div class="card"><div class="row"><div><h2>Registered Clubs</h2><p class="note">নাম পরিবর্তন করলে সংশ্লিষ্ট Tournament ও Team-এর সম্পর্ক অক্ষত থাকবে।</p></div><button class="secondary small" id="refreshClubs">Refresh</button></div><div id="clubList"></div></div>
+</section>
 <section id="tab-overview">
 <div class="stats"><div class="stat"><strong id="countTournaments">—</strong><span>Tournaments</span></div><div class="stat"><strong id="countTeams">—</strong><span>Teams recorded</span></div><div class="stat"><strong id="countMatches">—</strong><span>Matches created</span></div><div class="stat"><strong id="countClubs">—</strong><span>Clubs</span></div></div>
 <div class="card" style="margin-top:16px"><h2>কাজের ধাপ</h2><p class="note">প্রথমে Tournament-এর তথ্য তৈরি করুন। বাস্তবে যে ক্লাব আয়োজন করছে, তাদের কাছ থেকে পাওয়া তথ্য অনুযায়ী Team ও Player-এর রেকর্ড যোগ করুন। আয়োজক ক্লাবের লটারির ফল Admin এখানে ইনপুট করে Fixture তৈরি করবে। ম্যাচ তৈরি হলে Operator assign করা যাবে।</p><div class="actions"><button data-go="tournaments">+ Create Tournament</button><button class="secondary" data-go="teams">+ Add Team</button><button class="secondary" data-go="fixtures">Create Fixture</button></div></div>
@@ -85,6 +90,7 @@ const SUPABASE_KEY="sb_publishable_sN0tZnmfNbyCMBqJLbPcgQ_8mttlOhH";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
 const state={clubs:[],tournaments:[],teams:[],venues:[],matches:[],positions:[]};
+let editingClubId=null;
 function msg(id,text,kind=""){const el=$(id);el.textContent=text;el.className="message "+kind}
 function optionList(el,items,placeholder,labelFn){el.replaceChildren();const p=document.createElement("option");p.value="";p.textContent=placeholder;el.append(p);items.forEach(x=>{const o=document.createElement("option");o.value=x.id;o.textContent=labelFn(x);el.append(o)})}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
@@ -107,8 +113,52 @@ async function loadBase(){
  const ts=state.tournaments;["teamTournament","rosterTournament","fTournament"].forEach(id=>optionList($(id),ts,"Tournament বেছে নিন",x=>x.name));
  optionList($("fVenue"),state.venues,"মাঠ বেছে নিন",x=>x.name+" — "+(x.location||x.address||""));
  $("countTournaments").textContent=ts.length;$("countTeams").textContent=state.teams.length;$("countMatches").textContent=state.matches.length;$("countClubs").textContent=state.clubs.length;
- renderTournaments();renderFixtures();renderOperatorMatches();renderPositionOptions();await loadRoster();
+ renderClubs();renderTournaments();renderFixtures();renderOperatorMatches();renderPositionOptions();await loadRoster();
 }
+function renderClubs(){
+ const host=$("clubList");host.replaceChildren();
+ if(!state.clubs.length){host.textContent="এখনও কোনো Club যোগ করা হয়নি।";return}
+ state.clubs.forEach(c=>{
+  const box=document.createElement("div");box.className="item";
+  const row=document.createElement("div");row.className="row";
+  const name=document.createElement("strong");name.textContent=c.name;
+  const actions=document.createElement("div");actions.className="actions";
+  const edit=document.createElement("button");edit.type="button";edit.className="small secondary";edit.textContent="Rename";
+  edit.onclick=async()=>{
+   const next=prompt("নতুন Club Name লিখুন",c.name);if(next===null)return;
+   const name=next.trim();if(!name){msg("clubMessage","Club name খালি রাখা যাবে না।","error");return}
+   if(name===c.name)return;
+   const {error}=await db.from("clubs").update({name}).eq("id",c.id);
+   if(error){msg("clubMessage","Club update failed: "+error.message,"error");return}
+   msg("clubMessage","Club name updated successfully.","success");await loadBase();
+  };
+  const del=document.createElement("button");del.type="button";del.className="small secondary";del.textContent="Delete";
+  del.onclick=async()=>{
+   const [teams,tournaments]=await Promise.all([
+    db.from("teams").select("id",{count:"exact",head:true}).eq("club_id",c.id),
+    db.from("tournaments").select("id",{count:"exact",head:true}).eq("organizer_club_id",c.id)
+   ]);
+   if(teams.error||tournaments.error){msg("clubMessage","Club usage check failed: "+(teams.error||tournaments.error).message,"error");return}
+   if((teams.count||0)>0||(tournaments.count||0)>0){msg("clubMessage",c.name+" Delete করা যাবে না: এই Club-এর সঙ্গে "+(teams.count||0)+"টি Team এবং "+(tournaments.count||0)+"টি Tournament যুক্ত আছে।","error");return}
+   if(!confirm('"' + c.name + '" Club-টি Delete করবেন? এই কাজটি ফিরিয়ে আনা যাবে না।'))return;
+   const {error}=await db.from("clubs").delete().eq("id",c.id);
+   if(error){msg("clubMessage","Club delete failed: "+error.message,"error");return}
+   msg("clubMessage","Club deleted successfully.","success");await loadBase();
+  };
+  actions.append(edit,del);row.append(name,actions);box.append(row);host.append(box);
+ });
+}
+$("clubForm").onsubmit=async e=>{
+ e.preventDefault();const btn=$("saveClub");btn.disabled=true;
+ const name=$("clubName").value.trim();
+ if(!name){btn.disabled=false;msg("clubMessage","Club name লিখুন।","error");return}
+ const {error}=await db.from("clubs").insert({name});
+ btn.disabled=false;
+ if(error){msg("clubMessage","Club save failed: "+error.message,"error");return}
+ $("clubForm").reset();msg("clubMessage","Club added successfully. এখন Tournament-এর Organizer Club হিসেবে নির্বাচন করতে পারবেন।","success");await loadBase();
+};
+$("clearClub").onclick=()=>{$("clubForm").reset();msg("clubMessage","")};
+$("refreshClubs").onclick=()=>loadBase().catch(e=>msg("clubMessage",e.message,"error"));
 function renderTournaments(){
  const host=$("tournamentList");host.replaceChildren();
  if(!state.tournaments.length){host.textContent="এখনও কোনো Tournament নেই।";return}
