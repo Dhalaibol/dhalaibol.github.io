@@ -310,7 +310,9 @@ $("logoutButton").onclick=async()=>{await db.auth.signOut();$("adminDashboard").
 db.auth.onAuthStateChange((event)=>{if(event==="SIGNED_IN")checkAdmin()});checkAdmin();
 
 async function loadAdminExtras(){
- await Promise.all([loadApplications(),loadReferees(),loadOfficials()]);
+ await loadApplications();
+ await loadReferees();
+ await loadOfficials();
 }
 async function loadApplications(){
  const host=$("applicationList");if(!host)return;host.replaceChildren();
@@ -335,7 +337,7 @@ async function loadApplications(){
    b.onclick=async()=>{b.disabled=true;const {error}=await db.from("club_applications").update({status,admin_notes:notes.value.trim()||null,reviewed_by:currentAdminId,reviewed_at:new Date().toISOString()}).eq("id",a.id);if(error){b.disabled=false;alert("আবেদনের সিদ্ধান্ত সংরক্ষণ হয়নি: "+error.message);return}await loadApplications()};
    actions.append(b);
   }
-  const save=document.createElement("button");save.type="button";save.className="small secondary";save.textContent="Save Note";save.onclick=async()=>{const {error}=await db.from("club_applications").update({admin_notes:notes.value.trim()||null}).eq("id",a.id);if(error){alert(error.message);return}msg("applicationList","Admin Note সংরক্ষিত হয়েছে।","success")};actions.append(save);box.append(actions);host.append(box);
+  const save=document.createElement("button");save.type="button";save.className="small secondary";save.textContent="Save Note";save.onclick=async()=>{const {error}=await db.from("club_applications").update({admin_notes:notes.value.trim()||null}).eq("id",a.id);if(error){alert(error.message);return}await loadApplications()};actions.append(save);box.append(actions);host.append(box);
  });
 }
 async function loadReferees(){
@@ -346,7 +348,7 @@ async function loadReferees(){
  if(!data?.length){host.textContent="এখনও কোনো Referee নথিভুক্ত নেই।";return}
  data.forEach(r=>{const row=document.createElement("div");row.className="item row";const info=document.createElement("div");info.innerHTML="<strong>"+esc(r.name)+"</strong><div class='note'>"+esc(r.location||"Location not set")+" · "+esc(r.status)+"</div>";const b=document.createElement("button");b.type="button";b.className="small secondary";b.textContent=r.status==="active"?"Deactivate":"Activate";b.onclick=async()=>{const {error}=await db.from("referees").update({status:r.status==="active"?"inactive":"active"}).eq("id",r.id);if(error){alert(error.message);return}await loadReferees();await loadOfficials()};row.append(info,b);host.append(row)});
 }
-$("refereeForm").onsubmit=async e=>{e.preventDefault();const b=$("saveReferee");b.disabled=true;const {error}=await db.from("referees").insert({name:$("refereeName").value.trim(),location:$("refereeLocation").value.trim()||null,status:"active"});b.disabled=false;if(error){msg("refereeMessage",error.message,"error");return}e.target.reset();msg("refereeMessage","রেফারি যোগ হয়েছে।","success");await loadReferees()};
+$("refereeForm").onsubmit=async e=>{e.preventDefault();const b=$("saveReferee");b.disabled=true;const {error}=await db.from("referees").insert({name:$("refereeName").value.trim(),location:$("refereeLocation").value.trim()||null,status:"active"});b.disabled=false;if(error){msg("refereeMessage",error.message,"error");return}e.target.reset();msg("refereeMessage","রেফারি যোগ হয়েছে।","success");await loadReferees();await loadOfficials()};
 async function loadOfficials(){
  const matches=state.matches.filter(m=>m.status!=="completed"&&m.status!=="cancelled");
  optionList($("officialMatch"),matches,"ম্যাচ বেছে নিন",m=>{const a=state.teams.find(t=>String(t.id)===String(m.home_team_id))?.name||"Team A",b=state.teams.find(t=>String(t.id)===String(m.away_team_id))?.name||"Team B";return a+" vs "+b+" · "+new Date(m.scheduled_at).toLocaleString("en-IN")});
