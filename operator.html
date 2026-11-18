@@ -132,10 +132,8 @@ $("saveLineups").onclick=async()=>{
   if(rows.filter(x=>x.team_id===team.id&&x.is_captain).length>1){issue=team.name+": একজনের বেশি Captain নির্বাচন করা যাবে না।";break}
  }
  if(issue){btn.disabled=false;message("lineupMsg",issue,"error");return}
- const {error:delError}=await db.from("match_lineups").delete().eq("match_id",state.active.id);
- if(delError){btn.disabled=false;message("lineupMsg",delError.message,"error");return}
- const {error:insError}=await db.from("match_lineups").insert(rows);
- if(insError){btn.disabled=false;message("lineupMsg","Lineup save failed: "+insError.message,"error");return}
+ const {error:saveError}=await db.rpc("operator_save_lineup",{p_match_id:state.active.id,p_lineups:rows.map(x=>({team_id:x.team_id,player_id:x.player_id,position:x.position,is_captain:x.is_captain}))});
+ if(saveError){btn.disabled=false;message("lineupMsg","Lineup save failed: "+saveError.message,"error");return}
  message("lineupMsg","দুই দলের Match-day Lineup confirmed হয়েছে।","success");
  await openMatch(state.active);btn.disabled=false;
 };
@@ -148,10 +146,10 @@ function renderClock(c){
  if(!c){$("clock").textContent="00:00";$("period").textContent="FIRST HALF";$("clockState").textContent="CLOCK NOT STARTED";$("startClock").disabled=state.lineups.filter(x=>x.is_confirmed).length===0; $("pauseClock").disabled=true;$("resumeClock").disabled=true;$("endFirst").disabled=true;$("startSecond").disabled=true;$("endMatch").disabled=true;return}
  const sec=Number(c.current_elapsed_seconds)||0;$("clock").textContent=fmt(sec);$("period").textContent=String(c.current_period||"first_half").replaceAll("_"," ").toUpperCase();$("clockState").textContent=c.is_running?"CLOCK RUNNING":"CLOCK PAUSED";
  const running=!!c.is_running,first=c.current_period==="first_half",second=c.current_period==="second_half";
- $("startClock").disabled=true;$("pauseClock").disabled=!running;$("resumeClock").disabled=running;$("endFirst").disabled=!running||!first;$("startSecond").disabled=running||!first||state.active.status!=="half_time";$("endMatch").disabled=!running||!second;
+ $("startClock").disabled=true;$("pauseClock").disabled=!running;$("resumeClock").disabled=running||state.active.status!=="live";$("endFirst").disabled=!running||!first;$("startSecond").disabled=running||!first||state.active.status!=="half_time";$("endMatch").disabled=!running||!second;
  const halfSec=Number(state.active.half_duration_minutes||0)*60;$("halfWarning").textContent=running&&first&&halfSec>0&&sec>=Math.max(0,halfSec-60)?"⚠️ Half-time কাছাকাছি — Referee-এর whistle শুনে Half Time চাপুন।":"";
 }
-async function clockAction(fn){const b=event?.currentTarget; if(b)b.disabled=true;const {data,error}=await db.rpc(fn,{p_match_id:state.active.id});if(error)message("clockMsg",error.message,"error");else{message("clockMsg","Clock updated.","success");const {data:m}=await db.from("matches").select("status").eq("id",state.active.id).single();if(m){state.active.status=m.status;setMatchStatus(m.status)}await refreshClock()}if(b)b.disabled=false}
+async function clockAction(fn){const {data,error}=await db.rpc(fn,{p_match_id:state.active.id});if(error)message("clockMsg",error.message,"error");else{message("clockMsg","Clock updated.","success");const {data:m}=await db.from("matches").select("status").eq("id",state.active.id).single();if(m){state.active.status=m.status;setMatchStatus(m.status)}await refreshClock()}}
 $("startClock").onclick=async()=>{if(!state.lineups.length||state.lineups.some(x=>!x.is_confirmed)){message("clockMsg","প্রথমে দুই দলের lineup confirm করুন।","error");return}await clockAction("operator_start_clock")};
 $("pauseClock").onclick=()=>clockAction("operator_pause_clock");
 $("resumeClock").onclick=()=>clockAction("operator_resume_clock");
