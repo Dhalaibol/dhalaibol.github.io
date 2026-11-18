@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:24px 12px;background:#f3f7f4;font-family:Arial,sans-serif;color:#17251c">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;background:#fff;border:1px solid #e2e9e4;border-radius:16px;overflow:hidden">
+<tr><td style="padding:26px;background:#075b32;color:#fff"><div style="font-size:22px;font-weight:bold;letter-spacing:2px">DH ALAIBOL</div><p style="margin:8px 0 0;color:#d9f2e2">Official Match Operator Invitation</p></td></tr>
+<tr><td style="padding:26px">
+<h2 style="margin:0 0 12px">Hello {{ .Data.display_name }},</h2>
+<p>You have been invited to operate a Dhalaibol match. Please review the match details and prepare your phone and connectivity before match day.</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="8" style="background:#f4f8f5;border-radius:10px">
+<tr><td><b>Tournament</b></td><td>{{ .Data.tournament_name }}</td></tr>
+<tr><td><b>Match</b></td><td>{{ .Data.home_team_name }} vs {{ .Data.away_team_name }}</td></tr>
+<tr><td><b>Round</b></td><td>{{ .Data.match_round }}</td></tr>
+<tr><td><b>Match number</b></td><td>{{ .Data.match_number }}</td></tr>
+<tr><td><b>Date & time</b></td><td>{{ .Data.scheduled_at }} (IST)</td></tr>
+<tr><td><b>Venue</b></td><td>{{ .Data.venue_name }}</td></tr>
+<tr><td><b>Match ID</b></td><td>{{ .Data.match_id }}</td></tr>
+</table>
+<h3 style="margin:24px 0 8px;color:#8a5a00">Important match-day preparation</h3>
+<ul style="padding-left:20px;line-height:1.7">
+<li><b>Stable internet:</b> Ensure a strong, reliable mobile internet connection for the entire match.</li>
+<li><b>100% phone battery:</b> Fully charge your mobile phone before the match begins.</li>
+<li><b>Fully charged power bank:</b> Carry a fully charged power bank as backup.</li>
+<li><b>Phone charger:</b> Carry your charger. Keep the phone powered throughout the match.</li>
+<li><b>Stay available:</b> Arrive prepared before kick-off and keep your device with you until the match is completed.</li>
+</ul>
+<p style="padding:12px;background:#fff8e9;border:1px solid #f1dfb7;border-radius:10px"><b>Important:</b> A match may continue for a long time. Do not rely only on the phone's battery. Bring both a fully charged power bank and your charger.</p>
+<p style="text-align:center;margin:26px 0"><a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#087b43;color:#fff;text-decoration:none;padding:14px 24px;border-radius:9px;font-weight:bold">Accept Invitation & Activate Account</a></p>
+<p style="font-size:13px;color:#66756b">After accepting the invitation, open the Operator Dashboard and complete the first-time account activation. This invitation is intended only for the assigned operator.</p>
+<p style="margin-top:24px">Thank you,<br><b>Dhalaibol Match Operations Team</b></p>
+</td></tr></table></td></tr></table>
+</body></html>
