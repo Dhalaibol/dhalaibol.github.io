@@ -27,7 +27,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 </style>
 </head>
 <body>
-<header><div class="brand">⚽ DHALAIBOL</div><div class="subtitle">ADMIN MANAGEMENT · TOURNAMENTS · TEAMS · FIXTURES</div></header>
+<header><div class="brand">⚽ DHALAIBOL</div><div class="subtitle">ADMIN MANAGEMENT · TOURNAMENT RECORDS · TEAMS · FIXTURES</div></header>
 <main>
 <section class="card" id="loginCard"><h2>Admin Login</h2><p class="note">নিবন্ধিত Admin ইমেইলে Secure Magic Link পাঠানো হবে।</p>
 <form id="loginForm"><label>Admin Email</label><input id="adminEmail" type="email" required placeholder="আপনার Admin email"><div class="actions"><button id="loginButton">Send Magic Link</button></div></form><div id="loginMessage" class="message"></div></section>
@@ -37,8 +37,8 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 <button class="active" data-tab="overview">Overview</button><button data-tab="tournaments">Tournaments</button><button data-tab="teams">Teams & Players</button><button data-tab="fixtures">Fixtures & Draw Results</button><button data-tab="operators">Operator Assignment</button>
 </div>
 <section id="tab-overview">
-<div class="stats"><div class="stat"><strong id="countTournaments">—</strong><span>Tournaments</span></div><div class="stat"><strong id="countTeams">—</strong><span>Teams registered</span></div><div class="stat"><strong id="countMatches">—</strong><span>Matches created</span></div><div class="stat"><strong id="countClubs">—</strong><span>Clubs</span></div></div>
-<div class="card" style="margin-top:16px"><h2>কাজের ধাপ</h2><p class="note">প্রথমে Tournament তৈরি করুন। পরে ক্লাব থেকে তথ্য পেলেই Team ও Player যোগ করুন। আয়োজক ক্লাবের লটারির ফল Admin এখানে ইনপুট করে Fixture তৈরি করবে। ম্যাচ তৈরি হলে Operator assign করা যাবে।</p><div class="actions"><button data-go="tournaments">+ Create Tournament</button><button class="secondary" data-go="teams">+ Add Team</button><button class="secondary" data-go="fixtures">Create Fixture</button></div></div>
+<div class="stats"><div class="stat"><strong id="countTournaments">—</strong><span>Tournaments</span></div><div class="stat"><strong id="countTeams">—</strong><span>Teams recorded</span></div><div class="stat"><strong id="countMatches">—</strong><span>Matches created</span></div><div class="stat"><strong id="countClubs">—</strong><span>Clubs</span></div></div>
+<div class="card" style="margin-top:16px"><h2>কাজের ধাপ</h2><p class="note">প্রথমে Tournament-এর তথ্য তৈরি করুন। বাস্তবে যে ক্লাব আয়োজন করছে, তাদের কাছ থেকে পাওয়া তথ্য অনুযায়ী Team ও Player-এর রেকর্ড যোগ করুন। আয়োজক ক্লাবের লটারির ফল Admin এখানে ইনপুট করে Fixture তৈরি করবে। ম্যাচ তৈরি হলে Operator assign করা যাবে।</p><div class="actions"><button data-go="tournaments">+ Create Tournament</button><button class="secondary" data-go="teams">+ Add Team</button><button class="secondary" data-go="fixtures">Create Fixture</button></div></div>
 <div id="overviewRecent"></div></section>
 <section id="tab-tournaments" class="hidden">
 <div class="card"><h2>Create Tournament</h2><p class="note">শুরুতে শুধু আয়োজনের তথ্য দিয়েও Tournament Draft হিসেবে রাখা যাবে। Team পরে যোগ হবে।</p>
@@ -46,19 +46,19 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 <div class="grid"><div><label>Tournament Name *</label><input id="tName" required placeholder="যেমন: Panskura Cup"></div><div><label>Organizer Club *</label><select id="tOrganizer" required></select></div>
 <div><label>Edition / Year</label><input id="tEdition" type="number" placeholder="2027"></div><div><label>Location</label><input id="tLocation" placeholder="Panskura, Purba Medinipur"></div>
 <div><label>Start Date</label><input id="tStart" type="date"></div><div><label>End Date</label><input id="tEnd" type="date"></div>
-<div><label>Entry Fee (প্রতি টিম) ₹</label><input id="tEntry" type="number" min="0" step="0.01" placeholder="যেমন 1000"></div><div><label>Maximum Teams (পরিকল্পিত সংখ্যা)</label><input id="tMaxTeams" type="number" min="2" step="1" placeholder="যেমন 16"></div>
+<div><label>Entry Fee (প্রতি টিম) ₹</label><input id="tEntry" type="number" min="0" step="0.01" placeholder="যেমন 1000"></div>
 <div><label>Match Duration (মিনিট)</label><input id="tDuration" type="number" min="2" placeholder="যেমন 20"></div><div><label>Half Duration (মিনিট)</label><input id="tHalf" type="number" min="1" placeholder="খালি রাখলে অর্ধেক হবে"></div>
-<div><label>Players on Field / Team</label><input id="tPlayersSide" type="number" min="1" placeholder="যেমন 7"></div><div><label>Squad Limit (প্রতি টিম)</label><input id="tSquad" type="number" min="1" placeholder="যেমন 12"></div></div>
+</div>
 <hr><h3>Prize Distribution (₹)</h3><div class="grid"><div><label>First Prize</label><input id="tFirst" type="number" min="0" placeholder="0"></div><div><label>Second Prize</label><input id="tSecond" type="number" min="0" placeholder="0"></div><div><label>Third Prize</label><input id="tThird" type="number" min="0" placeholder="0"></div><div><label>Semifinalist Prize</label><input id="tSemi" type="text" placeholder="যেমন ₹2,000 each"></div><div><label>Man of the Match Prize</label><input id="tMom" type="text" placeholder="যেমন Trophy / ₹500"></div></div>
 <label>Tournament Rules / Notes</label><textarea id="tRules" placeholder="Substitution, red card, tie-breaker, entry fee terms ইত্যাদি"></textarea>
 <div class="actions"><button id="saveTournament">Save as Draft</button><button type="button" class="secondary" id="clearTournament">Clear</button></div><div id="tournamentMessage" class="message"></div></form></div>
 <div class="card"><div class="row"><div><h2>All Tournaments</h2><p class="note">Draft tournament-ও এখানে দেখা ও পরে Publish করা যাবে।</p></div><button id="refreshTournaments" class="secondary small">Refresh</button></div><div id="tournamentList"></div></div>
 </section>
 <section id="tab-teams" class="hidden">
-<div class="card"><h2>Add Team to Tournament</h2><p class="note">Team name আলাদা, Organizer Club আলাদা। Team ও player list পর্যায়ক্রমে যোগ করুন।</p>
-<form id="teamForm"><div class="grid"><div><label>Tournament *</label><select id="teamTournament" required></select></div><div><label>Team Name *</label><input id="teamName" required placeholder="Panskura Youngstar Brigade"></div><div><label>Associated Club *</label><select id="teamClub" required></select></div><div><label>Team Captain (optional)</label><input id="teamCaptain" placeholder="Captain-এর নাম"></div></div>
-<div class="actions"><button id="saveTeam">Add Team</button></div><div id="teamMessage" class="message"></div></form></div>
-<div class="card"><div class="row"><div><h2>Registered Teams & Squad</h2><p class="note">Team বেছে Player যোগ করুন। ৭ জন মাঠে খেললেও ১০–১২ জনের squad রাখা যাবে।</p></div><button class="secondary small" id="refreshTeams">Refresh</button></div>
+<div class="card"><h2>Tournament Team Entry</h2><p class="note">এটি Dhalaibol-এ বাস্তব টুর্নামেন্টের তথ্য নথিভুক্ত করার ধাপ—ক্লাবের নিজস্ব অংশগ্রহণ বা খেলার অনুমতি নেওয়ার রেজিস্ট্রেশন নয়। আয়োজক ক্লাবের কাছ থেকে পাওয়া Team-এর নাম ও তথ্য এখানে যোগ করুন।</p>
+<form id="teamForm"><div class="grid"><div><label>Tournament *</label><select id="teamTournament" required></select></div><div><label>Team Name *</label><input id="teamName" required placeholder="Panskura Youngstar Brigade"></div><div><label>Associated Club *</label><select id="teamClub" required></select></div></div>
+<div class="actions"><button id="saveTeam">Save Team Record</button></div><div id="teamMessage" class="message"></div></form></div>
+<div class="card"><div class="row"><div><h2>Recorded Teams & Player List</h2><p class="note">আয়োজক ক্লাব/দলের কাছ থেকে পাওয়া খেলোয়াড়দের তালিকা ও তাদের স্বাভাবিক পজিশন নথিভুক্ত করুন। কোনো নির্দিষ্ট squad size এখানে ধরে নেওয়া হচ্ছে না।</div><button class="secondary small" id="refreshTeams">Refresh</button></div>
 <label>Select Tournament</label><select id="rosterTournament"></select><div id="teamRoster"></div></div>
 </section>
 <section id="tab-fixtures" class="hidden">
@@ -122,7 +122,7 @@ $("tournamentForm").onsubmit=async e=>{
  const duration=Number($("tDuration").value)||null;const half=Number($("tHalf").value)||(duration?Math.floor(duration/2):null);
  const payload={name:$("tName").value.trim(),organizer_club_id:Number($("tOrganizer").value),edition:$("tEdition").value?Number($("tEdition").value):null,location:$("tLocation").value.trim()||null,start_date:$("tStart").value||null,end_date:$("tEnd").value||null,entry_fee:$("tEntry").value===""?null:Number($("tEntry").value),match_duration_minutes:duration,half_duration_minutes:half,first_prize:$("tFirst").value===""?null:Number($("tFirst").value),second_prize:$("tSecond").value===""?null:Number($("tSecond").value),third_prize:$("tThird").value===""?null:Number($("tThird").value),semifinalist_prize:$("tSemi").value.trim()||null,man_of_the_match_prize:$("tMom").value.trim()||null,rules:$("tRules").value.trim()||null,status:"upcoming",is_published:false};
  const {error}=await db.from("tournaments").insert(payload);btn.disabled=false;if(error){msg("tournamentMessage","Save failed: "+error.message,"error");return}
- msg("tournamentMessage","Tournament Draft saved. Maximum team count / players per side are currently planning fields and are not stored in the existing database schema.","success");$("tournamentForm").reset();await loadBase();
+ msg("tournamentMessage","Tournament Draft saved. Tournament-এর তথ্য সংরক্ষিত হয়েছে। এখানে দলের সংখ্যা বাস্তব আয়োজকের দেওয়া তথ্য অনুযায়ী রেকর্ড করা হবে; এই সাইটে দল যোগ না হওয়ার কারণে বাস্তব খেলার অংশগ্রহণে কোনো বাধা তৈরি হবে না।","success");$("tournamentForm").reset();await loadBase();
 };
 $("clearTournament").onclick=()=>$("tournamentForm").reset();
 $("refreshTournaments").onclick=()=>loadBase().catch(e=>msg("tournamentMessage",e.message,"error"));
@@ -133,7 +133,7 @@ $("teamForm").onsubmit=async e=>{
  if(error){btn.disabled=false;msg("teamMessage",error.message,"error");return}
  const {error:linkError}=await db.from("tournament_teams").insert({tournament_id:tid,team_id:team.id});
  btn.disabled=false;if(linkError){msg("teamMessage","Team created, but tournament link failed: "+linkError.message,"error");return}
- msg("teamMessage","Team added. এখন Squad section থেকে Player যোগ করুন।","success");$("teamName").value="";await loadBase();$("rosterTournament").value=tid;await loadRoster();
+ msg("teamMessage","Team record saved in Dhalaibol. এখন Player List section থেকে খেলোয়াড়দের তথ্য যোগ করুন।","success");$("teamName").value="";await loadBase();$("rosterTournament").value=tid;await loadRoster();
 };
 $("rosterTournament").onchange=loadRoster;$("refreshTeams").onclick=()=>loadBase().catch(e=>alert(e.message));
 async function loadRoster(){
@@ -147,7 +147,7 @@ async function loadRoster(){
   const head=document.createElement("div");head.className="row";head.innerHTML="<div><strong>"+esc(t.name)+"</strong><div class='note'>"+esc(club?.name||"Club")+"</div></div><span class='pill'>"+(players?.length||0)+" Players</span>";box.append(head);
   if(pe){const p=document.createElement("p");p.className="error";p.textContent=pe.message;box.append(p)}
   (players||[]).forEach(p=>{const row=document.createElement("div");row.className="player";row.innerHTML="<span>"+esc(p.name)+"</span><span class='note'>"+esc(p.position||"Player")+"</span>";box.append(row)});
-  const form=document.createElement("form");form.className="grid";form.innerHTML='<div><label>Add Player Name</label><input name="player" required placeholder="Player full name"></div><div><label>Position (optional)</label><input name="position" placeholder="Forward / Defender / Goalkeeper"></div><div class="actions" style="grid-column:1/-1"><button class="small">Add Player</button></div><div class="note" style="grid-column:1/-1"></div>';
+  const form=document.createElement("form");form.className="grid";form.innerHTML='<div><label>Add Player Name</label><input name="player" required placeholder="Player full name"></div><div><label>Position (optional)</label><input name="position" placeholder="আয়োজক/দলের দেওয়া স্বাভাবিক পজিশন"></div><div class="actions" style="grid-column:1/-1"><button class="small">Add Player</button></div><div class="note" style="grid-column:1/-1"></div>';
   form.onsubmit=async e=>{e.preventDefault();const b=form.querySelector("button");b.disabled=true;const fd=new FormData(form);const {data:created,error}=await db.from("players").insert({name:String(fd.get("player")).trim(),position:String(fd.get("position")).trim()||null,current_team_id:t.id}).select("id").single();if(error){form.querySelector(".note").textContent=error.message;b.disabled=false;return}const {error:he}=await db.from("player_team_history").insert({player_id:created.id,team_id:t.id,from_date:new Date().toISOString().slice(0,10)});form.querySelector(".note").textContent=he?"Player added; history record issue: "+he.message:"Player added successfully.";await loadRoster()};
   box.append(form);host.append(box);
  }
