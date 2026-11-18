@@ -91,7 +91,7 @@ document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>tab(b.dataset.go
 async function loadBase(){
  const [c,t,tm,v,m,po]=await Promise.all([
  db.from("clubs").select("id,name").order("name"),
- db.from("tournaments").select("id,name,organizer_club_id,location,start_date,end_date,entry_fee,first_prize,second_prize,third_prize,semifinalist_prize,man_of_the_match_prize,match_duration_minutes,half_duration_minutes,status,is_published,rules").order("created_at",{ascending:false}),
+ db.from("tournaments").select("id,name,organizer_club_id,location,start_date,end_date,entry_fee,first_prize,second_prize,third_prize,semifinalist_prize,man_of_the_match_prize,match_duration_minutes,half_duration_minutes,status,is_published,rules,organizer_reported_team_count").order("created_at",{ascending:false}),
  db.from("teams").select("id,name,club_id,captain_player_id").order("name"),
  db.from("venues").select("id,name,location,address").order("name"),
  db.from("matches").select("id,tournament_id,home_team_id,away_team_id,venue_id,round,match_number,scheduled_at,status,is_published,match_duration_minutes,half_duration_minutes").order("scheduled_at"),
@@ -113,7 +113,7 @@ function renderTournaments(){
  const org=state.clubs.find(c=>String(c.id)===String(t.organizer_club_id));
  const count=state.matches.filter(m=>String(m.tournament_id)===String(t.id)).length;
  const box=document.createElement("div");box.className="item";
- box.innerHTML='<div class="row"><strong>'+esc(t.name)+'</strong><span class="pill '+(t.is_published?"":"gray")+'">'+(t.is_published?"Published":"Draft")+'</span></div><p class="note">'+esc(org?.name||"Organizer not set")+' · '+esc(t.location||"Location pending")+' · '+count+' matches</p><p class="note">Entry Fee: ₹'+(t.entry_fee??"—")+' · Prize: ₹'+(t.first_prize??"—")+' / ₹'+(t.second_prize??"—")+' / ₹'+(t.third_prize??"—")+'</p><div class="actions"><button class="small secondary" data-publish="'+t.id+'" data-value="'+(!t.is_published)+'">'+(t.is_published?"Unpublish":"Publish")+'</button><button class="small secondary" data-select="'+t.id+'">Manage Teams / Fixtures</button></div>';
+ box.innerHTML='<div class="row"><strong>'+esc(t.name)+'</strong><span class="pill '+(t.is_published?"":"gray")+'">'+(t.is_published?"Published":"Draft")+'</span></div><p class="note">'+esc(org?.name||"Organizer not set")+' · '+esc(t.location||"Location pending")+' · '+(t.organizer_reported_team_count??'দলের সংখ্যা জানানো হয়নি')+'টি দল (আয়োজকের তথ্য) · '+count+' matches</p><p class="note">Entry Fee: ₹'+(t.entry_fee??"—")+' · Prize: ₹'+(t.first_prize??"—")+' / ₹'+(t.second_prize??"—")+' / ₹'+(t.third_prize??"—")+'</p><div class="actions"><button class="small secondary" data-publish="'+t.id+'" data-value="'+(!t.is_published)+'">'+(t.is_published?"Unpublish":"Publish")+'</button><button class="small secondary" data-select="'+t.id+'">Manage Teams / Fixtures</button></div>';
  host.append(box);
  });
  host.querySelectorAll("[data-publish]").forEach(b=>b.onclick=async()=>{const id=Number(b.dataset.publish);const {error}=await db.from("tournaments").update({is_published:b.dataset.value==="true"}).eq("id",id);if(error)return alert(error.message);await loadBase()});
