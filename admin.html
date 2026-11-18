@@ -102,6 +102,7 @@ const $=id=>document.getElementById(id);
 const state={clubs:[],tournaments:[],teams:[],venues:[],matches:[],positions:[]};
 let currentAdminId=null;
 let editingClubId=null;
+let editingTournamentId=null;
 function msg(id,text,kind=""){const el=$(id);el.textContent=text;el.className="message "+kind}
 function optionList(el,items,placeholder,labelFn){el.replaceChildren();const p=document.createElement("option");p.value="";p.textContent=placeholder;el.append(p);items.forEach(x=>{const o=document.createElement("option");o.value=x.id;o.textContent=labelFn(x);el.append(o)})}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
@@ -177,20 +178,32 @@ function renderTournaments(){
  const org=state.clubs.find(c=>String(c.id)===String(t.organizer_club_id));
  const count=state.matches.filter(m=>String(m.tournament_id)===String(t.id)).length;
  const box=document.createElement("div");box.className="item";
- box.innerHTML='<div class="row"><strong>'+esc(t.name)+'</strong><span class="pill '+(t.is_published?"":"gray")+'">'+(t.is_published?"Published":"Draft")+'</span></div><p class="note">'+esc(org?.name||"Organizer not set")+' · '+esc(t.location||"Location pending")+' · '+(t.registration_team_limit??'দলের সংখ্যা জানানো হয়নি')+'টি দল (নির্ধারিত সীমা) · '+count+' matches</p><p class="note">Entry Fee: ₹'+(t.entry_fee??"—")+' · Prize: ₹'+(t.first_prize??"—")+' / ₹'+(t.second_prize??"—")+' / ₹'+(t.third_prize??"—")+'</p><div class="actions"><button class="small secondary" data-publish="'+t.id+'" data-value="'+(!t.is_published)+'">'+(t.is_published?"Unpublish":"Publish")+'</button><button class="small secondary" data-select="'+t.id+'">Manage Teams / Fixtures</button></div>';
+ box.innerHTML='<div class="row"><strong>'+esc(t.name)+'</strong><span class="pill '+(t.is_published?"":"gray")+'">'+(t.is_published?"Published":"Draft")+'</span></div><p class="note">'+esc(org?.name||"Organizer not set")+' · '+esc(t.location||"Location pending")+' · '+(t.registration_team_limit??'দলের সংখ্যা জানানো হয়নি')+'টি দল (নির্ধারিত সীমা) · '+count+' matches</p><p class="note">Entry Fee: ₹'+(t.entry_fee??"—")+' · Prize: ₹'+(t.first_prize??"—")+' / ₹'+(t.second_prize??"—")+' / ₹'+(t.third_prize??"—")+'</p><div class="actions"><button class="small secondary" data-publish="'+t.id+'" data-value="'+(!t.is_published)+'">'+(t.is_published?"Unpublish":"Publish")+'</button><button class="small secondary" data-edit-tournament="'+t.id+'">Edit Details</button><button class="small secondary" data-select="'+t.id+'">Manage Teams / Fixtures</button></div>';
  host.append(box);
  });
  host.querySelectorAll("[data-publish]").forEach(b=>b.onclick=async()=>{const id=Number(b.dataset.publish);const {error}=await db.from("tournaments").update({is_published:b.dataset.value==="true"}).eq("id",id);if(error)return alert(error.message);await loadBase()});
  host.querySelectorAll("[data-select]").forEach(b=>b.onclick=()=>{const id=b.dataset.select;["teamTournament","rosterTournament","fTournament"].forEach(x=>$(x).value=id);tab("teams");loadRoster()});
+ host.querySelectorAll("[data-edit-tournament]").forEach(b=>b.onclick=()=>{
+  const t=state.tournaments.find(x=>String(x.id)===b.dataset.editTournament);if(!t)return;
+  editingTournamentId=t.id;
+  $("tName").value=t.name||"";$("tOrganizer").value=t.organizer_club_id||"";$("tEdition").value=t.edition||"";
+  $("tLocation").value=t.location||"";$("tAddress").value=t.address||"";$("tLatitude").value=t.latitude||"";$("tLongitude").value=t.longitude||"";
+  $("tStart").value=t.start_date||"";$("tEnd").value=t.end_date||"";$("tEntry").value=t.entry_fee??"";
+  $("tReportedTeams").value=t.registration_team_limit??"";$("tDuration").value=t.match_duration_minutes??"";$("tHalf").value=t.half_duration_minutes??"";
+  $("tFirst").value=t.first_prize??"";$("tSecond").value=t.second_prize??"";$("tThird").value=t.third_prize??"";
+  $("tSemi").value=t.semifinalist_prize||"";$("tMom").value=t.man_of_the_match_prize||"";$("tRules").value=t.rules||"";
+  $("saveTournament").textContent="Update Tournament";tab("tournaments");window.scrollTo({top:0,behavior:"smooth"});
+ });
+
 }
 $("tournamentForm").onsubmit=async e=>{
  e.preventDefault();const btn=$("saveTournament");btn.disabled=true;msg("tournamentMessage","Saving tournament...");
  const duration=Number($("tDuration").value)||null;const half=Number($("tHalf").value)||(duration?Math.floor(duration/2):null);
  const payload={name:$("tName").value.trim(),organizer_club_id:Number($("tOrganizer").value),edition:$("tEdition").value?Number($("tEdition").value):null,location:$("tLocation").value.trim()||null,address:$("tAddress").value.trim()||null,latitude:$("tLatitude").value?Number($("tLatitude").value):null,longitude:$("tLongitude").value?Number($("tLongitude").value):null,start_date:$("tStart").value||null,end_date:$("tEnd").value||null,entry_fee:$("tEntry").value===""?null:Number($("tEntry").value),registration_team_limit:$("tReportedTeams").value===""?null:Number($("tReportedTeams").value),match_duration_minutes:duration,half_duration_minutes:half,first_prize:$("tFirst").value===""?null:Number($("tFirst").value),second_prize:$("tSecond").value===""?null:Number($("tSecond").value),third_prize:$("tThird").value===""?null:Number($("tThird").value),semifinalist_prize:$("tSemi").value.trim()||null,man_of_the_match_prize:$("tMom").value.trim()||null,rules:$("tRules").value.trim()||null,status:"upcoming",is_published:false};
- const {error}=await db.from("tournaments").insert(payload);btn.disabled=false;if(error){msg("tournamentMessage","Save failed: "+error.message,"error");return}
- msg("tournamentMessage","Tournament Draft saved. Tournament-এর তথ্য সংরক্ষিত হয়েছে। এখানে দলের সংখ্যা বাস্তব আয়োজকের দেওয়া তথ্য অনুযায়ী রেকর্ড করা হবে; এই সাইটে দল যোগ না হওয়ার কারণে বাস্তব খেলার অংশগ্রহণে কোনো বাধা তৈরি হবে না।","success");$("tournamentForm").reset();await loadBase();
+ const result=editingTournamentId?await db.from("tournaments").update(payload).eq("id",editingTournamentId):await db.from("tournaments").insert(payload);const {error}=result;btn.disabled=false;if(error){msg("tournamentMessage","Save failed: "+error.message,"error");return}
+ msg("tournamentMessage",editingTournamentId?"Tournament details updated successfully.":"Tournament Draft saved successfully.","success");editingTournamentId=null;$("saveTournament").textContent="Save as Draft";$("tournamentForm").reset();await loadBase();
 };
-$("clearTournament").onclick=()=>$("tournamentForm").reset();
+$("clearTournament").onclick=()=>{editingTournamentId=null;$("saveTournament").textContent="Save as Draft";$("tournamentForm").reset();msg("tournamentMessage","")};
 $("refreshTournaments").onclick=()=>loadBase().catch(e=>msg("tournamentMessage",e.message,"error"));
 $("teamForm").onsubmit=async e=>{
  e.preventDefault();const btn=$("saveTeam");btn.disabled=true;msg("teamMessage","Adding team...");
