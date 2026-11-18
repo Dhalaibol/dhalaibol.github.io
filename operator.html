@@ -1,376 +1,188 @@
-<!DOCTYPE html>
-
-
-
-<html lang="en">
+<!doctype html>
+<html lang="bn">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dhalaibol | Operator Dashboard</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dhalaibol | Match Operator</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  .match-title{text-align:center;font-size:14px}
-.teams{display:flex;align-items:center;justify-content:space-between;text-align:center;gap:8px}
-.team{width:38%;font-weight:bold}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:#f1f5f2;color:#17251c;padding-bottom:25px}
-header{background:#075b32;color:white;padding:19px 17px}
-.brand{font-size:23px;font-weight:800}
-.sub{font-size:12px;margin-top:5px;opacity:.85}
-.container{max-width:650px;margin:auto;padding:15px}
-.card{background:white;border-radius:15px;padding:17px;margin-bottom:14px;box-shadow:0 3px 12px #0000000c}
-.section{font-size:15px;font-weight:700;margin-bottom:13px}
-.status{display:inline-block;padding:6px 10px;border-radius:20px;font-size:11px;font-weight:bold;background:#fff1dc;color:#9b5b00}
-.match{background:#fff;border-radius:15px;padding:17px;margin-bottom:14px}
-.match-title{text-align:t:bold;font-size:14px}
-.team-icon{font-size:26px;margin-bottom:7px}
-.score{font-size:29px;font-weight:800}
-.timer{text-align:center;background:#102d1d;color:white;padding:19px;border-radius:15px;margin-bottom:14px}
-.clock{font-size:42px;font-weight:800;font-variant-numeric:tabular-nums;margin:9px}
-.period{font-size:12px;color:#c5e4cf}
-.warning{font-size:11px;color:#ffdb83;margin-top:9px}
-button{border:0;border-radius:10px;padding:13px;font-size:14px;font-weight:bold;cursor:pointer}
-button:disabled{opacity:.45;cursor:not-allowed}
-.controls{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.primary{background:#08783e;color:white}
-.secondary{background:#e6f2e9;color:#075b32}
-.danger{background:#ffebeb;color:#b32626}
-.event-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.event-grid button{background:#edf5ef;color:#145a32}
-.note{font-size:12px;color:#6a756d;line-height:1.5}
-.field{width:100%;padding:12px;border:1px solid #d7dfd9;border-radius:9px;margin-top:8px;font-size:14px;background:#fff}
-.event-row{padding:11px 0;border-bottom:1px solid #edf0ed;font-size:13px}
-.footer{text-align:center;color:#7c877f;font-size:11px;padding:12px}
-.demo{background:#fff4d9;color:#77500a;padding:11px;border-radius:10px;font-size:12px;line-height:1.5;margin-bottom:14px}
+:root{--green:#087b43;--deep:#075b32;--ink:#17251c;--muted:#66756b;--line:#e2e9e4;--bg:#f3f7f4}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Arial,sans-serif}
+header{background:linear-gradient(120deg,#064b2b,#0b8050);color:#fff;padding:18px max(16px,calc((100% - 900px)/2))}
+.brand{font-size:23px;font-weight:800}.sub{font-size:12px;opacity:.85}
+main{max-width:900px;margin:auto;padding:16px}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:17px;margin-bottom:14px;box-shadow:0 4px 18px #12351c0b}
+h2{font-size:18px;margin:0 0 8px}.note{font-size:12px;color:var(--muted)}label{display:block;font-weight:700;font-size:13px;margin:9px 0 5px}
+input,select{width:100%;padding:11px;border:1px solid #d4ded7;border-radius:9px;background:#fff;font:inherit;color:var(--ink)}
+button{border:0;border-radius:9px;padding:11px 14px;background:var(--green);color:#fff;font-weight:700;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
+.secondary{background:#eaf3ed;color:var(--deep)}.danger{background:#fff0ed;color:#a33220}.small{padding:7px 10px;font-size:12px}
+.hidden{display:none!important}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.matchteams{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;text-align:center}.teamname{font-weight:800;font-size:17px}.score{font-size:30px;font-weight:900;font-variant-numeric:tabular-nums}
+.timer{background:#102d1d;color:white;border-radius:14px;text-align:center;padding:20px}.clock{font-size:48px;font-weight:900;font-variant-numeric:tabular-nums}.period{font-size:12px;color:#c5e4cf}.warning{color:#ffdc84;font-size:12px;min-height:18px}
+.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}.status{display:inline-block;border-radius:30px;padding:5px 9px;background:#eef4ef;color:#1b653c;font-size:11px;font-weight:800}
+.teamlineup{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px}.playerrow{display:grid;grid-template-columns:auto 1fr minmax(130px,.8fr) auto;gap:8px;align-items:center;border-bottom:1px solid #edf1ee;padding:8px 0}.playerrow:last-child{border:0}.playerrow input[type=checkbox]{width:18px;height:18px}.playerrow select{padding:7px;font-size:12px}
+.event{padding:9px 0;border-bottom:1px solid #edf1ee;font-size:13px}.msg{font-size:13px;margin-top:8px;overflow-wrap:anywhere}.error{color:#b42318}.success{color:#137342}
+@media(max-width:600px){main{padding:10px}.card{padding:13px}.grid{grid-template-columns:1fr}.clock{font-size:40px}.playerrow{grid-template-columns:auto 1fr}.playerrow select{grid-column:2}.playerrow .captain{grid-column:2}.matchteams{gap:4px}.teamname{font-size:14px}}
 </style>
 </head>
 <body>
-
-<header>
-  <div class="brand">⚽ DHALAIBOL</div>
-  <div class="sub">MATCH OPERATOR PANEL</div>
-</header>
-
-<main class="container">
-  <!-- Operator Login -->
-<div class="card" id="operatorLogin">
-  <div class="section">Operator Login</div>
-  <p class="note">Enter your registered email address to access your assigned match.</p>
-
-  <form id="operatorLoginForm">
-    <input
-      class="field"
-      type="email"
-      id="operatorEmail"
-      placeholder="Enter your email address"
-      required
-    >
-
-    <button
-      class="primary"
-      type="submit"
-      style="width:100%;margin-top:12px"
-    >
-      Continue
-    </button>
-  </form>
-
-  <p class="note" id="loginMessage" style="margin-top:12px"></p>
-</div>
-
-  <div class="demo">
-    <strong>DEMO PREVIEW</strong><br>
-    This is a visual prototype. Match controls are not connected to the live database yet.
-  </div>
-
-  <div class="card">
-    <div class="section">Operator Information</div>
-    <div><strong>Operator:</strong> Not logged in</div>
-    <div class="note" style="margin-top:7px">Your assigned match will appear here after secure login.</div>
-    <div style="margin-top:12px"><span class="status">WAITING FOR ASSIGNMENT</span></div>
-  </div>
-
-  <section class="match">
-    <div class="match-title">ASSIGNED MATCH • DEMO</div>
-    <div class="teams">
-      <div class="team">
-        <div class="team-icon">⚽</div>
-        <div>Home Team</div>
-      </div>
-      <div>
-        <div class="score"><span id="homeScore">0</span> - <span id="awayScore">0</span></div>
-        <div class="note">LIVE SCORE</div>
-      </div>
-      <div class="team">
-        <div class="team-icon">⚽</div>
-        <div>Away Team</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="timer">
-    <div class="period" id="period">FIRST HALF</div>
-    <div class="clock" id="clock">00:00</div>
-    <div class="period" id="clockStatus">DEMO CLOCK • STOPPED</div>
-    <div class="warning">Half-time warning will be connected later</div>
-  </section>
-
-  <div class="card">
-    <div class="section">Match Clock Controls</div>
-    <div class="controls">
-      <button class="primary" id="startBtn" onclick="startClock()">▶ Start</button>
-      <button class="secondary" id="pauseBtn" onclick="pauseClock()" disabled>Ⅱ Pause</button>
-      <button class="secondary" id="halfBtn" onclick="endHalf()" disabled>Half Time</button>
-      <button class="primary" id="secondBtn" onclick="secondHalf()" disabled>Second Half</button>
-    </div>
-    <button class="danger" id="endBtn" style="width:100%;margin-top:9px" onclick="endMatch()" disabled>End Match</button>
-  </div>
-
-  <div class="card">
-    <div class="section">Match Events</div>
-    <div class="note" style="margin-bottom:13px">Demo controls only. Real player and team selection will come from confirmed lineups.</div>
-    <div class="event-grid">
-      <button onclick="addGoal('Home')">⚽ Home Goal</button>
-      <button onclick="addGoal('Away')">⚽ Away Goal</button>
-      <button onclick="addEvent('Yellow Card')">🟨 Yellow Card</button>
-      <button onclick="addEvent('Red Card')">🟥 Red Card</button>
-      <button onclick="addEvent('Substitution')">🔄 Substitution</button>
-      <button onclick="addEvent('Own Goal')">⚽ Own Goal</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="section">Match Event Timeline</div>
-    <div id="events"><p class="note">No events recorded in this demo.</p></div>
-  </div>
-
-  <div class="card">
-    <div class="section">Match Information</div>
-    <p class="note">Tournament: Assigned by Admin</p>
-    <p class="note" style="margin-top:7px">Venue: Assigned match venue</p>
-    <p class="note" style="margin-top:7px">Referee: Match official</p>
-  </div>
-
-  <div class="card">
-    <div class="section">Operator Preparation</div>
-    <p class="note">✓ Mobile battery charged</p>
-    <p class="note" style="margin-top:7px">✓ Stable internet connection</p>
-    <p class="note" style="margin-top:7px">✓ Power bank ready</p>
-  </div>
-
+<header><div class="brand">⚽ DHALAIBOL</div><div class="sub">MATCH OPERATOR DASHBOARD</div></header>
+<main>
+<section class="card" id="loginCard">
+<h2>Operator Login</h2><p class="note">Admin-এর পাঠানো invitation-এ ব্যবহৃত ইমেইল দিয়ে Secure Magic Link নিন।</p>
+<form id="loginForm"><label>Email Address</label><input id="email" type="email" required placeholder="operator@example.com"><div style="margin-top:12px"><button id="loginBtn" type="submit">Send Secure Login Link</button></div></form><div id="loginMsg" class="msg"></div>
+</section>
+<section id="workspace" class="hidden">
+<div class="card"><div class="row"><div><h2>Operator Workspace</h2><div class="note" id="identity"></div></div><button id="logout" class="secondary small">Sign out</button></div></div>
+<div class="card"><h2>Assigned Matches</h2><p class="note">শুধু আপনার Active assignment-এর ম্যাচ এখানে দেখা যাবে। Viewer count দেখানো হয় না।</p><select id="matchSelect"><option value="">Assigned match বেছে নিন</option></select><div id="matchInfo" class="note" style="margin-top:9px"></div></div>
+<section id="matchWorkspace" class="hidden">
+<div class="card"><div class="row"><h2 id="tournamentTitle">Match</h2><span class="status" id="matchStatus">SCHEDULED</span></div><div class="matchteams"><div><div class="teamname" id="homeName">Home</div><div class="note">HOME</div></div><div class="score"><span id="homeScore">0</span> - <span id="awayScore">0</span></div><div><div class="teamname" id="awayName">Away</div><div class="note">AWAY</div></div></div><div class="note" id="venueInfo" style="text-align:center;margin-top:8px"></div></div>
+<div class="card" id="lineupCard"><h2>Step 1 — Match-day Lineup & Position</h2><p class="note">দুই দলের roster থেকে আজ যারা খেলবে তাদের নির্বাচন করুন। প্রত্যেক দলের নির্বাচিত খেলোয়াড়দের মধ্যে একজনকে Goalkeeper দিতে হবে। এটি Player-এর profile position নয়; আজকের ম্যাচের position।</p><div id="lineupTeams"></div><div class="row" style="margin-top:12px"><button id="saveLineups">Confirm Both Team Lineups</button><span class="note" id="lineupState"></span></div><div id="lineupMsg" class="msg"></div></div>
+<div class="card"><h2>Step 2 — Match Clock</h2><div class="timer"><div class="period" id="period">FIRST HALF</div><div class="clock" id="clock">00:00</div><div class="period" id="clockState">CLOCK NOT STARTED</div><div class="warning" id="halfWarning"></div></div><div class="controls"><button id="startClock">▶ Start First Half</button><button id="pauseClock" class="secondary" disabled>Ⅱ Pause</button><button id="endFirst" class="secondary" disabled>End First Half</button><button id="startSecond" disabled>Start Second Half</button><button id="resumeClock" class="secondary" disabled>Resume Clock</button><button id="endMatch" class="danger" disabled>End Match</button></div><p class="note" id="durationInfo" style="margin-top:9px"></p><div id="clockMsg" class="msg"></div></div>
+<div class="card" id="eventCard"><h2>Step 3 — Record Match Event</h2><p class="note">Event রেকর্ড করার জন্য Clock চলতে হবে। Goal / Card / Substitution-এর খেলোয়াড় confirmed lineup থেকে বেছে নিন।</p><div class="grid"><div><label>Team</label><select id="eventTeam"></select></div><div><label>Event Type</label><select id="eventType"><option value="goal">Goal</option><option value="own_goal">Own Goal</option><option value="yellow_card">Yellow Card</option><option value="red_card">Red Card</option><option value="substitution">Substitution</option></select></div><div><label>Player</label><select id="eventPlayer"></select></div><div id="relatedWrap" class="hidden"><label>Incoming Player (Substitution)</label><select id="relatedPlayer"></select></div><div style="grid-column:1/-1"><label>Description (optional)</label><input id="eventDescription" placeholder="সংক্ষিপ্ত বিবরণ"></div></div><div style="margin-top:12px"><button id="saveEvent">Save Match Event</button></div><div id="eventMsg" class="msg"></div></div>
+<div class="card"><h2>Match Event Timeline</h2><div id="timeline" class="note">No events recorded.</div></div>
+</section>
+</section>
 </main>
-
-<div class="footer">Dhalaibol • Local Football Platform</div>
-
 <script>
-let seconds=0;
-let running=false;
-let interval=null;
-let half=1;
-let home=0,away=0;
-
-function renderClock(){
-  let m=Math.floor(seconds/60);
-  let s=seconds%60;
-  document.getElementById("clock").textContent=
-    String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+const SUPABASE_URL="https://gshaezskvhhudicvpzst.supabase.co";
+const SUPABASE_KEY="sb_publishable_sN0tZnmfNbyCMBqJLbPcgQ_8mttlOhH";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+const state={user:null,matches:[],active:null,teams:[],rosters:{},positions:[],lineups:[],clock:null,timer:null};
+function message(id,text,kind=""){const el=$(id);el.textContent=text;el.className="msg "+kind}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function fmt(sec){sec=Math.max(0,Number(sec)||0);return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0")}
+function setMatchStatus(s){$("matchStatus").textContent=String(s||"scheduled").replaceAll("_"," ").toUpperCase()}
+async function loginCheck(){
+ const {data:{session}}=await db.auth.getSession();if(!session)return;
+ state.user=session.user;$("identity").textContent=session.user.email||session.user.id;
+ const {data:role,error}=await db.from("user_roles").select("role").eq("user_id",session.user.id).eq("role","operator").maybeSingle();
+ if(error||!role){message("loginMsg",error?"Role check failed: "+error.message:"এই account Operator হিসেবে অনুমোদিত নয়।","error");return}
+ $("loginCard").classList.add("hidden");$("workspace").classList.remove("hidden");
+ await loadAssignments();
 }
-
-function updateButtons(){
-  document.getElementById("startBtn").disabled=running||half>1;
-  document.getElementById("pauseBtn").disabled=!running;
-  document.getElementById("halfBtn").disabled=!running||half!==1;
-  document.getElementById("secondBtn").disabled=running||half!==2;
-  document.getElementById("endBtn").disabled=!running||half!==2;
+$("loginForm").onsubmit=async e=>{e.preventDefault();$("loginBtn").disabled=true;message("loginMsg","Secure link পাঠানো হচ্ছে...");const {error}=await db.auth.signInWithOtp({email:$("email").value.trim(),options:{shouldCreateUser:false,emailRedirectTo:location.href}});$("loginBtn").disabled=false;message("loginMsg",error?error.message:"ইমেইলে Login Link পাঠানো হয়েছে।",""+(error?"error":"success"))};
+$("logout").onclick=async()=>{await db.auth.signOut();location.reload()};
+db.auth.onAuthStateChange((event)=>{if(event==="SIGNED_IN")setTimeout(()=>loginCheck(),0)});
+async function loadAssignments(){
+ const {data:a,error}=await db.from("operator_assignments").select("match_id,assigned_at").eq("operator_id",state.user.id).eq("is_active",true);
+ if(error){message("loginMsg",error.message,"error");return}
+ if(!a?.length){$("matchSelect").innerHTML='<option value="">এখনও কোনো Match assign করা হয়নি</option>';return}
+ const ids=a.map(x=>x.match_id);
+ const {data:m,error:me}=await db.from("matches").select("id,tournament_id,home_team_id,away_team_id,venue_id,round,match_number,scheduled_at,status,match_duration_minutes,half_duration_minutes,is_published").in("id",ids).order("scheduled_at");
+ if(me){message("loginMsg",me.message,"error");return}
+ const [t,v,teams,pos]=await Promise.all([
+  db.from("tournaments").select("id,name,edition").in("id",[...new Set(m.map(x=>x.tournament_id))]),
+  db.from("venues").select("id,name,location,address"),
+  db.from("teams").select("id,name,club_id").in("id",[...new Set(m.flatMap(x=>[x.home_team_id,x.away_team_id]))]),
+  db.from("player_position_options").select("id,name,display_name_bn,is_active,sort_order").eq("is_active",true).order("sort_order")
+ ]);
+ for(const r of [t,v,teams,pos])if(r.error){message("loginMsg",r.error.message,"error");return}
+ state.matches=m.map(x=>({...x,tournament:t.data.find(y=>y.id===x.tournament_id),venue:v.data.find(y=>y.id===x.venue_id),home:teams.data.find(y=>y.id===x.home_team_id),away:teams.data.find(y=>y.id===x.away_team_id)}));
+ state.positions=pos.data||[];
+ $("matchSelect").innerHTML='<option value="">Assigned match বেছে নিন</option>'+state.matches.map(x=>'<option value="'+x.id+'">'+esc(x.tournament?.name||"Tournament")+' · '+esc(x.home?.name||"Home")+' vs '+esc(x.away?.name||"Away")+' · '+new Date(x.scheduled_at).toLocaleString()+'</option>').join("");
 }
-
-function startClock(){
-  if(running||half>1)return;
-  running=true;
-  document.getElementById("clockStatus").textContent="DEMO CLOCK • RUNNING";
-  interval=setInterval(()=>{
-    seconds++;
-    renderClock();
-  },1000);
-  updateButtons();
+$("matchSelect").onchange=async()=>{const m=state.matches.find(x=>String(x.id)===$("matchSelect").value);if(!m){$("matchWorkspace").classList.add("hidden");return}await openMatch(m)};
+async function openMatch(m){
+ state.active=m;state.clock=null;state.lineups=[];
+ $("matchWorkspace").classList.remove("hidden");$("tournamentTitle").textContent=m.tournament?.name||"Tournament";
+ $("homeName").textContent=m.home?.name||"Home";$("awayName").textContent=m.away?.name||"Away";setMatchStatus(m.status);
+ $("venueInfo").textContent=[m.round,"Match "+m.match_number,m.venue?.name,m.venue?.location||m.venue?.address].filter(Boolean).join(" · ");
+ $("durationInfo").textContent="মোট সময়: "+(m.match_duration_minutes??"—")+" মিনিট · প্রতি অর্ধ: "+(m.half_duration_minutes??"—")+" মিনিট";
+ const ids=[m.home_team_id,m.away_team_id];
+ const [h,a,l]=await Promise.all([
+  db.from("players").select("id,name,position,date_of_birth").eq("current_team_id",m.home_team_id).order("name"),
+  db.from("players").select("id,name,position,date_of_birth").eq("current_team_id",m.away_team_id).order("name"),
+  db.from("match_lineups").select("id,team_id,player_id,lineup_role,position,shirt_number,is_captain,is_confirmed").eq("match_id",m.id)
+ ]);
+ for(const r of [h,a,l])if(r.error){message("lineupMsg",r.error.message,"error");return}
+ state.rosters={[m.home_team_id]:h.data||[],[m.away_team_id]:a.data||[]};state.lineups=l.data||[];
+ renderLineups();renderEventSelects();await refreshSummary();await refreshClock();
 }
-
-function pauseClock(){
-  if(!running)return;
-  clearInterval(interval);
-  running=false;
-  document.getElementById("clockStatus").textContent="DEMO CLOCK • PAUSED";
-  updateButtons();
-}
-
-function endHalf(){
-  if(!running||half!==1)return;
-  clearInterval(interval);
-  running=false;
-  half=2;
-  document.getElementById("period").textContent="HALF TIME";
-  document.getElementById("clockStatus").textContent="DEMO CLOCK • HALF TIME";
-  document.getElementById("secondBtn").disabled=false;
-  document.getElementById("halfBtn").disabled=true;
-  updateButtons();
-}
-
-function secondHalf(){
-  if(half!==2||running)return;
-  seconds=0;
-  renderClock();
-  document.getElementById("period").textContent="SECOND HALF";
-  document.getElementById("clockStatus").textContent="DEMO CLOCK • RUNNING";
-  running=true;
-  interval=setInterval(()=>{
-    seconds++;
-    renderClock();
-  },1000);
-  updateButtons();
-}
-
-function endMatch(){
-  if(!running||half!==2)return;
-  clearInterval(interval);
-  running=false;
-  document.getElementById("clockStatus").textContent="DEMO MATCH • COMPLETED";
-  document.getElementById("period").textContent="FULL TIME";
-  updateButtons();
-}
-
-function addGoal(team){
-  if(!running){
-    alert("Demo: Start the clock first.");
-    return;
-  }
-  if(team==="Home"){
-    home++;
-    document.getElementById("homeScore").textContent=home;
-  }else{
-    away++;
-    document.getElementById("awayScore").textContent=away;
-  }
-  addTimeline(team+" Team Goal");
-}
-
-function addEvent(name){
-  if(!running){
-    alert("Demo: Start the clock first.");
-    return;
-  }
-  addTimeline(name);
-}
-
-function addTimeline(name){
-  const box=document.getElementById("events");
-  if(box.querySelector(".note"))box.innerHTML="";
-  const row=document.createElement("div");
-  row.className="event-row";
-  row.textContent=
-    document.getElementById("clock").textContent+" • "+name;
-  box.prepend(row);
-}
-</script>
-  
-<!-- Supabase Connection -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const SUPABASE_URL = "https://gshaezskvhhudicvpzst.supabase.co";
-
-const SUPABASE_ANON_KEY = "sb_publishable_sN0tZnmfNbyCMBqJLbPcgQ_8mttlOhH";
-
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
-</script>
-
-  <script>
-document.getElementById("operatorLoginForm").addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const email = document.getElementById("operatorEmail").value.trim();
-  const message = document.getElementById("loginMessage");
-
-  message.textContent = "Sending secure login link...";
-
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email: email,
-    options: {
-      shouldCreateUser: false,
-      emailRedirectTo: window.location.href
-    }
+function renderLineups(){
+ const host=$("lineupTeams");host.replaceChildren();
+ for(const team of [state.active.home,state.active.away]){
+  const box=document.createElement("div");box.className="teamlineup";
+  const title=document.createElement("h3");title.textContent=team.name+" — Roster";box.append(title);
+  const players=state.rosters[team.id]||[];
+  if(!players.length){const p=document.createElement("p");p.className="note";p.textContent="এই দলের Player roster খালি। Admin-কে Player তথ্য যোগ করতে হবে।";box.append(p)}
+  players.forEach(p=>{
+   const old=state.lineups.find(x=>x.team_id===team.id&&x.player_id===p.id);
+   const row=document.createElement("div");row.className="playerrow";
+   const cb=document.createElement("input");cb.type="checkbox";cb.className="pick";cb.checked=!!old;cb.dataset.player=p.id;cb.dataset.team=team.id;
+   const name=document.createElement("div");name.innerHTML="<strong>"+esc(p.name)+"</strong><div class='note'>Profile: "+esc(p.position||"—")+"</div>";
+   const pos=document.createElement("select");pos.className="matchpos";pos.dataset.player=p.id;pos.disabled=!cb.checked;
+   pos.append(new Option("Match position বেছে নিন",""));state.positions.forEach(o=>pos.append(new Option((o.display_name_bn||o.name)+" ("+o.name+")",o.name)));
+   pos.value=old?.position||"";const cap=document.createElement("label");cap.className="captain note";const capCb=document.createElement("input");capCb.type="checkbox";capCb.className="cap";capCb.dataset.player=p.id;capCb.checked=!!old?.is_captain;cap.append(capCb,document.createTextNode(" Captain"));
+   cb.onchange=()=>{pos.disabled=!cb.checked;if(!cb.checked)capCb.checked=false};
+   row.append(cb,name,pos,cap);box.append(row);
   });
-
-  if (error) {
-    message.textContent = "Login error: " + error.message;
-  } else {
-    message.textContent = "Login link sent. Please check your email.";
-  }
-});
-</script>
-  <!-- Operator Access Verification -->
-<script>
-async function verifyOperatorAccess() {
-  const message = document.getElementById("loginMessage");
-
-  const { data: sessionData, error: sessionError } =
-    await supabaseClient.auth.getSession();
-
-  if (sessionError || !sessionData.session) {
-    return;
-  }
-
-  const user = sessionData.session.user;
-
-  message.textContent = "Checking Operator account...";
-
-  // Step 1: Verify Operator Role
-  const { data: roleData, error: roleError } =
-    await supabaseClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "operator")
-      .maybeSingle();
-
-  if (roleError) {
-    message.textContent = "Role verification failed: " + roleError.message;
-    return;
-  }
-
-  if (!roleData) {
-    message.textContent =
-      "Access denied. This account is not registered as an Operator.";
-    return;
-  }
-
-  // Step 2: Find assigned matches
-  const { data: assignments, error: assignmentError } =
-    await supabaseClient
-      .from("operator_assignments")
-      .select("match_id, assigned_at")
-      .eq("operator_id", user.id)
-      .eq("is_active", true);
-
-  if (assignmentError) {
-    message.textContent =
-      "Assignment check failed: " + assignmentError.message;
-    return;
-  }
-
-  if (!assignments || assignments.length === 0) {
-    message.textContent =
-      "Operator verified, but no active match is assigned yet.";
-    return;
-  }
-
-  message.textContent =
-    "Operator verified. Assigned Match ID(s): " +
-    assignments.map(item => item.match_id).join(", ");
+  host.append(box);
+ }
+ $("lineupState").textContent=state.lineups.length?state.lineups.filter(x=>x.is_confirmed).length+" confirmed lineup entries":"Lineup not confirmed";
 }
-
-// Check access when the page loads
-verifyOperatorAccess();
+$("saveLineups").onclick=async()=>{
+ const btn=$("saveLineups");btn.disabled=true;message("lineupMsg","Lineup যাচাই ও সংরক্ষণ হচ্ছে...");
+ const rows=[];let issue="";
+ for(const team of [state.active.home,state.active.away]){
+  const selected=[...$("lineupTeams").querySelectorAll('.pick[data-team="'+team.id+'"]:checked')];
+  if(!selected.length){issue=team.name+": অন্তত একজন খেলোয়াড় নির্বাচন করুন।";break}
+  let gk=0;
+  for(const cb of selected){const id=Number(cb.dataset.player),pos=$("lineupTeams").querySelector('.matchpos[data-player="'+id+'"]');const cap=$("lineupTeams").querySelector('.cap[data-player="'+id+'"]');if(!pos.value){issue="প্রত্যেক নির্বাচিত খেলোয়াড়ের Match position নির্বাচন করুন।";break}if(pos.value.toLowerCase()==="goalkeeper")gk++;rows.push({match_id:state.active.id,team_id:team.id,player_id:id,lineup_role:"starting",position:pos.value,is_captain:cap.checked,is_confirmed:true})}
+  if(issue)break;if(gk!==1){issue=team.name+": ঠিক একজন Goalkeeper নির্বাচন করুন।";break}
+  if(rows.filter(x=>x.team_id===team.id&&x.is_captain).length>1){issue=team.name+": একজনের বেশি Captain নির্বাচন করা যাবে না।";break}
+ }
+ if(issue){btn.disabled=false;message("lineupMsg",issue,"error");return}
+ const {error:delError}=await db.from("match_lineups").delete().eq("match_id",state.active.id);
+ if(delError){btn.disabled=false;message("lineupMsg",delError.message,"error");return}
+ const {error:insError}=await db.from("match_lineups").insert(rows);
+ if(insError){btn.disabled=false;message("lineupMsg","Lineup save failed: "+insError.message,"error");return}
+ message("lineupMsg","দুই দলের Match-day Lineup confirmed হয়েছে।","success");
+ await openMatch(state.active);btn.disabled=false;
+};
+async function refreshClock(){
+ const {data,error}=await db.rpc("operator_get_clock",{p_match_id:state.active.id});
+ if(error){state.clock=null;renderClock(null);return}
+ state.clock=data;renderClock(data);
+}
+function renderClock(c){
+ if(!c){$("clock").textContent="00:00";$("period").textContent="FIRST HALF";$("clockState").textContent="CLOCK NOT STARTED";$("startClock").disabled=state.lineups.filter(x=>x.is_confirmed).length===0; $("pauseClock").disabled=true;$("resumeClock").disabled=true;$("endFirst").disabled=true;$("startSecond").disabled=true;$("endMatch").disabled=true;return}
+ const sec=Number(c.current_elapsed_seconds)||0;$("clock").textContent=fmt(sec);$("period").textContent=String(c.current_period||"first_half").replaceAll("_"," ").toUpperCase();$("clockState").textContent=c.is_running?"CLOCK RUNNING":"CLOCK PAUSED";
+ const running=!!c.is_running,first=c.current_period==="first_half",second=c.current_period==="second_half";
+ $("startClock").disabled=true;$("pauseClock").disabled=!running;$("resumeClock").disabled=running;$("endFirst").disabled=!running||!first;$("startSecond").disabled=running||!first||state.active.status!=="half_time";$("endMatch").disabled=!running||!second;
+ const halfSec=Number(state.active.half_duration_minutes||0)*60;$("halfWarning").textContent=running&&first&&halfSec>0&&sec>=Math.max(0,halfSec-60)?"⚠️ Half-time কাছাকাছি — Referee-এর whistle শুনে Half Time চাপুন।":"";
+}
+async function clockAction(fn){const b=event?.currentTarget; if(b)b.disabled=true;const {data,error}=await db.rpc(fn,{p_match_id:state.active.id});if(error)message("clockMsg",error.message,"error");else{message("clockMsg","Clock updated.","success");const {data:m}=await db.from("matches").select("status").eq("id",state.active.id).single();if(m){state.active.status=m.status;setMatchStatus(m.status)}await refreshClock()}if(b)b.disabled=false}
+$("startClock").onclick=async()=>{if(!state.lineups.length||state.lineups.some(x=>!x.is_confirmed)){message("clockMsg","প্রথমে দুই দলের lineup confirm করুন।","error");return}await clockAction("operator_start_clock")};
+$("pauseClock").onclick=()=>clockAction("operator_pause_clock");
+$("resumeClock").onclick=()=>clockAction("operator_resume_clock");
+$("endFirst").onclick=()=>clockAction("operator_end_first_half");
+$("startSecond").onclick=()=>clockAction("operator_start_second_half");
+$("endMatch").onclick=()=>{if(confirm("Referee-এর Full Time whistle নিশ্চিত? Match শেষ হবে।"))clockAction("operator_end_match")};
+$("eventTeam").onchange=renderEventPlayers;
+function renderEventPlayers(){
+ const team=Number($("eventTeam").value);const list=state.lineups.filter(x=>x.team_id===team&&x.is_confirmed);
+ const roster=state.rosters[team]||[];$("eventPlayer").innerHTML='<option value="">Player বেছে নিন</option>'+list.map(x=>{const p=roster.find(y=>y.id===x.player_id);return '<option value="'+x.player_id+'">'+esc(p?.name||"Player")+'</option>'}).join("");
+ $("relatedPlayer").innerHTML='<option value="">Incoming Player বেছে নিন</option>'+list.map(x=>{const p=roster.find(y=>y.id===x.player_id);return '<option value="'+x.player_id+'">'+esc(p?.name||"Player")+'</option>'}).join("");
+}
+function renderEventSelects(){$("eventTeam").innerHTML='<option value="'+state.active.home_team_id+'">'+esc(state.active.home.name)+'</option><option value="'+state.active.away_team_id+'">'+esc(state.active.away.name)+'</option>';renderEventPlayers()}
+$("eventType").onchange=()=>$("relatedWrap").classList.toggle("hidden",$("eventType").value!=="substitution");
+$("saveEvent").onclick=async()=>{
+ const team=Number($("eventTeam").value),type=$("eventType").value,player=Number($("eventPlayer").value),related=$("relatedPlayer").value?Number($("relatedPlayer").value):null;
+ if(!player){message("eventMsg","Player নির্বাচন করুন।","error");return}
+ if(type==="substitution"&&(!related||related===player)){message("eventMsg","Incoming Player নির্বাচন করুন।","error");return}
+ const b=$("saveEvent");b.disabled=true;
+ const {data,error}=await db.rpc("operator_add_event",{p_match_id:state.active.id,p_event_type:type,p_team_id:team,p_player_id:player,p_related_player_id:related,p_description:$("eventDescription").value.trim()||null});
+ b.disabled=false;if(error){message("eventMsg",error.message,"error");return}
+ $("eventDescription").value="";message("eventMsg","Event saved. Match score updated.","success");await refreshSummary();
+};
+async function refreshSummary(){
+ const {data,error}=await db.rpc("operator_get_match_summary",{p_match_id:state.active.id});if(error)return;
+ $("homeScore").textContent=data.home_score??0;$("awayScore").textContent=data.away_score??0;
+ const ev=data.events||[];$("timeline").innerHTML=ev.length?ev.slice().reverse().map(x=>'<div class="event"><strong>'+esc(x.minute)+"′ "+esc(String(x.event_type).replaceAll("_"," "))+'</strong> · '+esc(x.team_name||"Team")+' · '+esc(x.player_name||"Player")+(x.related_player_name?" → "+esc(x.related_player_name):"")+'</div>').join(""):'<span class="note">No events recorded.</span>';
+}
+function startLocalRefresh(){clearInterval(state.timer);state.timer=setInterval(async()=>{if(!state.active)return;await refreshClock()},2000)}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.active){refreshClock();refreshSummary()}});
+(async()=>{await loginCheck();startLocalRefresh()})();
 </script>
 </body>
 </html>
