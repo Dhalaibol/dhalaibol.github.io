@@ -41,6 +41,13 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .event-row{padding:11px 0;border-bottom:1px solid #edf0ed;font-size:13px}
 .footer{text-align:center;color:#7c877f;font-size:11px;padding:12px}
 .demo{background:#fff4d9;color:#77500a;padding:11px;border-radius:10px;font-size:12px;line-height:1.5;margin-bottom:14px}
+
+.hidden{display:none!important}
+label{display:block;margin-top:8px}
+select.field{width:100%}
+.event-row{padding:11px 0;border-bottom:1px solid #edf0ed;font-size:13px;line-height:1.5}
+.timer.warning-active{animation:timerBlink 1s ease-in-out 3}
+@keyframes timerBlink{50%{box-shadow:0 0 0 4px #f4c542}}
 </style>
 </head>
 <body>
@@ -50,326 +57,598 @@ button:disabled{opacity:.45;cursor:not-allowed}
   <div class="sub">MATCH OPERATOR PANEL</div>
 </header>
 
+
 <main class="container">
-  <!-- Operator Login -->
-<div class="card" id="operatorLogin">
-  <div class="section">Operator Login</div>
-  <p class="note">Enter your registered email address to access your assigned match.</p>
-
-  <form id="operatorLoginForm">
-    <input
-      class="field"
-      type="email"
-      id="operatorEmail"
-      placeholder="Enter your email address"
-      required
-    >
-
-    <button
-      class="primary"
-      type="submit"
-      style="width:100%;margin-top:12px"
-    >
-      Continue
-    </button>
-  </form>
-
-  <p class="note" id="loginMessage" style="margin-top:12px"></p>
-</div>
-
-  <div class="demo">
-    <strong>DEMO PREVIEW</strong><br>
-    This is a visual prototype. Match controls are not connected to the live database yet.
-  </div>
-
-  <div class="card">
-    <div class="section">Operator Information</div>
-    <div><strong>Operator:</strong> Not logged in</div>
-    <div class="note" style="margin-top:7px">Your assigned match will appear here after secure login.</div>
-    <div style="margin-top:12px"><span class="status">WAITING FOR ASSIGNMENT</span></div>
-  </div>
-
-  <section class="match">
-    <div class="match-title">ASSIGNED MATCH • DEMO</div>
-    <div class="teams">
-      <div class="team">
-        <div class="team-icon">⚽</div>
-        <div>Home Team</div>
-      </div>
-      <div>
-        <div class="score"><span id="homeScore">0</span> - <span id="awayScore">0</span></div>
-        <div class="note">LIVE SCORE</div>
-      </div>
-      <div class="team">
-        <div class="team-icon">⚽</div>
-        <div>Away Team</div>
-      </div>
-    </div>
+  <section class="card" id="operatorLogin">
+    <div class="section">Operator Login</div>
+    <p class="note">Enter your registered email address. A secure login link will be sent to you.</p>
+    <form id="operatorLoginForm">
+      <input class="field" type="email" id="operatorEmail" placeholder="Registered operator email" required>
+      <button class="primary" type="submit" id="loginButton" style="width:100%;margin-top:12px">Send Login Link</button>
+    </form>
+    <p class="note" id="loginMessage" style="margin-top:12px"></p>
   </section>
 
-  <section class="timer">
-    <div class="period" id="period">FIRST HALF</div>
-    <div class="clock" id="clock">00:00</div>
-    <div class="period" id="clockStatus">DEMO CLOCK • STOPPED</div>
-    <div class="warning">Half-time warning will be connected later</div>
+  <section id="operatorDashboard" class="hidden">
+    <div class="card">
+      <div class="section">Operator Information</div>
+      <div><strong>Operator:</strong> <span id="operatorIdentity">Loading...</span></div>
+      <div class="note" id="assignmentStatus" style="margin-top:7px">Checking assigned matches...</div>
+      <label for="matchSelect" class="note" style="display:block;margin-top:12px">Assigned Match</label>
+      <select id="matchSelect" class="field"></select>
+      <button class="secondary" id="refreshButton" type="button" style="width:100%;margin-top:10px">Refresh Match</button>
+      <button class="danger" id="logoutButton" type="button" style="width:100%;margin-top:10px">Sign Out</button>
+    </div>
+
+    <section class="match">
+      <div class="match-title" id="matchTitle">ASSIGNED MATCH</div>
+      <div class="teams">
+        <div class="team"><div class="team-icon">⚽</div><div id="homeTeamName">Home Team</div></div>
+        <div>
+          <div class="score"><span id="homeScore">0</span> - <span id="awayScore">0</span></div>
+          <div class="note">LIVE SCORE</div>
+        </div>
+        <div class="team"><div class="team-icon">⚽</div><div id="awayTeamName">Away Team</div></div>
+      </div>
+      <p class="note" id="matchMeta" style="text-align:center;margin-top:12px"></p>
+    </section>
+
+    <section class="timer" id="timerPanel">
+      <div class="period" id="period">MATCH NOT STARTED</div>
+      <div class="clock" id="clock">00:00</div>
+      <div class="period" id="clockStatus">WAITING FOR START</div>
+      <div class="warning" id="clockWarning">Timer is controlled by the Match Operator.</div>
+    </section>
+
+    <div class="card">
+      <div class="section">Match Clock Controls</div>
+      <div class="controls">
+        <button class="primary" id="startBtn" type="button">▶ Start Match</button>
+        <button class="secondary" id="pauseBtn" type="button">Ⅱ Pause</button>
+        <button class="secondary" id="halfBtn" type="button">Half Time</button>
+        <button class="primary" id="secondBtn" type="button">Second Half</button>
+      </div>
+      <button class="danger" id="endBtn" type="button" style="width:100%;margin-top:9px">End Match</button>
+      <p class="note" id="clockMessage" style="margin-top:10px"></p>
+    </div>
+
+    <div class="card">
+      <div class="section">Record Match Event</div>
+      <p class="note" style="margin-bottom:10px">Choose the player from the confirmed lineup. For an own goal, select the team and player who scored the own goal.</p>
+      <label for="eventType" class="note">Event Type</label>
+      <select id="eventType" class="field">
+        <option value="goal">Goal</option>
+        <option value="own_goal">Own Goal</option>
+        <option value="yellow_card">Yellow Card</option>
+        <option value="red_card">Red Card</option>
+        <option value="substitution">Substitution</option>
+      </select>
+      <label for="eventTeam" class="note">Player's Team</label>
+      <select id="eventTeam" class="field"></select>
+      <label for="eventPlayer" class="note">Player</label>
+      <select id="eventPlayer" class="field"></select>
+      <div id="relatedPlayerWrap" class="hidden">
+        <label for="relatedPlayer" class="note">Player Coming In (Substitution)</label>
+        <select id="relatedPlayer" class="field"></select>
+      </div>
+      <label for="eventDescription" class="note">Note (Optional)</label>
+      <input id="eventDescription" class="field" type="text" maxlength="250" placeholder="Optional event note">
+      <button class="primary" id="addEventButton" type="button" style="width:100%;margin-top:12px">Save Match Event</button>
+      <p class="note" id="eventMessage" style="margin-top:10px"></p>
+    </div>
+
+    <div class="card">
+      <div class="section">Match Event Timeline</div>
+      <div id="events"><p class="note">No events recorded.</p></div>
+    </div>
+
+    <div class="card">
+      <div class="section">Match Information</div>
+      <p class="note" id="tournamentInfo">Tournament: —</p>
+      <p class="note" id="venueInfo" style="margin-top:7px">Venue: —</p>
+      <p class="note" id="durationInfo" style="margin-top:7px">Match Duration: —</p>
+    </div>
+
+    <div class="card">
+      <div class="section">Operator Preparation</div>
+      <p class="note">✓ Mobile battery charged</p>
+      <p class="note" style="margin-top:7px">✓ Stable internet connection</p>
+      <p class="note" style="margin-top:7px">✓ Power bank ready</p>
+    </div>
   </section>
-
-  <div class="card">
-    <div class="section">Match Clock Controls</div>
-    <div class="controls">
-      <button class="primary" id="startBtn" onclick="startClock()">▶ Start</button>
-      <button class="secondary" id="pauseBtn" onclick="pauseClock()" disabled>Ⅱ Pause</button>
-      <button class="secondary" id="halfBtn" onclick="endHalf()" disabled>Half Time</button>
-      <button class="primary" id="secondBtn" onclick="secondHalf()" disabled>Second Half</button>
-    </div>
-    <button class="danger" id="endBtn" style="width:100%;margin-top:9px" onclick="endMatch()" disabled>End Match</button>
-  </div>
-
-  <div class="card">
-    <div class="section">Match Events</div>
-    <div class="note" style="margin-bottom:13px">Demo controls only. Real player and team selection will come from confirmed lineups.</div>
-    <div class="event-grid">
-      <button onclick="addGoal('Home')">⚽ Home Goal</button>
-      <button onclick="addGoal('Away')">⚽ Away Goal</button>
-      <button onclick="addEvent('Yellow Card')">🟨 Yellow Card</button>
-      <button onclick="addEvent('Red Card')">🟥 Red Card</button>
-      <button onclick="addEvent('Substitution')">🔄 Substitution</button>
-      <button onclick="addEvent('Own Goal')">⚽ Own Goal</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="section">Match Event Timeline</div>
-    <div id="events"><p class="note">No events recorded in this demo.</p></div>
-  </div>
-
-  <div class="card">
-    <div class="section">Match Information</div>
-    <p class="note">Tournament: Assigned by Admin</p>
-    <p class="note" style="margin-top:7px">Venue: Assigned match venue</p>
-    <p class="note" style="margin-top:7px">Referee: Match official</p>
-  </div>
-
-  <div class="card">
-    <div class="section">Operator Preparation</div>
-    <p class="note">✓ Mobile battery charged</p>
-    <p class="note" style="margin-top:7px">✓ Stable internet connection</p>
-    <p class="note" style="margin-top:7px">✓ Power bank ready</p>
-  </div>
-
 </main>
 
 <div class="footer">Dhalaibol • Local Football Platform</div>
 
-<script>
-let seconds=0;
-let running=false;
-let interval=null;
-let half=1;
-let home=0,away=0;
 
-function renderClock(){
-  let m=Math.floor(seconds/60);
-  let s=seconds%60;
-  document.getElementById("clock").textContent=
-    String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
-}
-
-function updateButtons(){
-  document.getElementById("startBtn").disabled=running||half>1;
-  document.getElementById("pauseBtn").disabled=!running;
-  document.getElementById("halfBtn").disabled=!running||half!==1;
-  document.getElementById("secondBtn").disabled=running||half!==2;
-  document.getElementById("endBtn").disabled=!running||half!==2;
-}
-
-function startClock(){
-  if(running||half>1)return;
-  running=true;
-  document.getElementById("clockStatus").textContent="DEMO CLOCK • RUNNING";
-  interval=setInterval(()=>{
-    seconds++;
-    renderClock();
-  },1000);
-  updateButtons();
-}
-
-function pauseClock(){
-  if(!running)return;
-  clearInterval(interval);
-  running=false;
-  document.getElementById("clockStatus").textContent="DEMO CLOCK • PAUSED";
-  updateButtons();
-}
-
-function endHalf(){
-  if(!running||half!==1)return;
-  clearInterval(interval);
-  running=false;
-  half=2;
-  document.getElementById("period").textContent="HALF TIME";
-  document.getElementById("clockStatus").textContent="DEMO CLOCK • HALF TIME";
-  document.getElementById("secondBtn").disabled=false;
-  document.getElementById("halfBtn").disabled=true;
-  updateButtons();
-}
-
-function secondHalf(){
-  if(half!==2||running)return;
-  seconds=0;
-  renderClock();
-  document.getElementById("period").textContent="SECOND HALF";
-  document.getElementById("clockStatus").textContent="DEMO CLOCK • RUNNING";
-  running=true;
-  interval=setInterval(()=>{
-    seconds++;
-    renderClock();
-  },1000);
-  updateButtons();
-}
-
-function endMatch(){
-  if(!running||half!==2)return;
-  clearInterval(interval);
-  running=false;
-  document.getElementById("clockStatus").textContent="DEMO MATCH • COMPLETED";
-  document.getElementById("period").textContent="FULL TIME";
-  updateButtons();
-}
-
-function addGoal(team){
-  if(!running){
-    alert("Demo: Start the clock first.");
-    return;
-  }
-  if(team==="Home"){
-    home++;
-    document.getElementById("homeScore").textContent=home;
-  }else{
-    away++;
-    document.getElementById("awayScore").textContent=away;
-  }
-  addTimeline(team+" Team Goal");
-}
-
-function addEvent(name){
-  if(!running){
-    alert("Demo: Start the clock first.");
-    return;
-  }
-  addTimeline(name);
-}
-
-function addTimeline(name){
-  const box=document.getElementById("events");
-  if(box.querySelector(".note"))box.innerHTML="";
-  const row=document.createElement("div");
-  row.className="event-row";
-  row.textContent=
-    document.getElementById("clock").textContent+" • "+name;
-  box.prepend(row);
-}
-</script>
-  
-<!-- Supabase Connection -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+"use strict";
+
 const SUPABASE_URL = "https://gshaezskvhhudicvpzst.supabase.co";
-
 const SUPABASE_ANON_KEY = "sb_publishable_sN0tZnmfNbyCMBqJLbPcgQ_8mttlOhH";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
-</script>
+const $ = (id) => document.getElementById(id);
+let currentUser = null;
+let activeMatchId = null;
+let activeMatch = null;
+let activeClock = null;
+let clockBaseSeconds = 0;
+let clockBaseAt = 0;
+let clockInterval = null;
+let warningPlayedFor = "";
 
-  <script>
-document.getElementById("operatorLoginForm").addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const email = document.getElementById("operatorEmail").value.trim();
-  const message = document.getElementById("loginMessage");
-
-  message.textContent = "Sending secure login link...";
-
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email: email,
-    options: {
-      shouldCreateUser: false,
-      emailRedirectTo: window.location.href
-    }
-  });
-
-  if (error) {
-    message.textContent = "Login error: " + error.message;
-  } else {
-    message.textContent = "Login link sent. Please check your email.";
-  }
-});
-</script>
-  <!-- Operator Access Verification -->
-<script>
-async function verifyOperatorAccess() {
-  const message = document.getElementById("loginMessage");
-
-  const { data: sessionData, error: sessionError } =
-    await supabaseClient.auth.getSession();
-
-  if (sessionError || !sessionData.session) {
-    return;
-  }
-
-  const user = sessionData.session.user;
-
-  message.textContent = "Checking Operator account...";
-
-  // Step 1: Verify Operator Role
-  const { data: roleData, error: roleError } =
-    await supabaseClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "operator")
-      .maybeSingle();
-
-  if (roleError) {
-    message.textContent = "Role verification failed: " + roleError.message;
-    return;
-  }
-
-  if (!roleData) {
-    message.textContent =
-      "Access denied. This account is not registered as an Operator.";
-    return;
-  }
-
-  // Step 2: Find assigned matches
-  const { data: assignments, error: assignmentError } =
-    await supabaseClient
-      .from("operator_assignments")
-      .select("match_id, assigned_at")
-      .eq("operator_id", user.id)
-      .eq("is_active", true);
-
-  if (assignmentError) {
-    message.textContent =
-      "Assignment check failed: " + assignmentError.message;
-    return;
-  }
-
-  if (!assignments || assignments.length === 0) {
-    message.textContent =
-      "Operator verified, but no active match is assigned yet.";
-    return;
-  }
-
-  message.textContent =
-    "Operator verified. Assigned Match ID(s): " +
-    assignments.map(item => item.match_id).join(", ");
+function showMessage(id, message, isError = false) {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = message || "";
+  el.style.color = isError ? "#b32626" : "";
 }
 
-// Check access when the page loads
+function formatTime(totalSeconds) {
+  const safe = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  const seconds = safe % 60;
+  return hours > 0
+    ? String(hours).padStart(2, "0") + ":" + String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0")
+    : String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+}
+
+function unwrapRpc(data) {
+  if (!data) return null;
+  return data.clock || data.summary || data.data || data;
+}
+
+function setButtonStates() {
+  const clock = activeClock;
+  const hasClock = !!clock;
+  const running = !!clock?.is_running;
+  const period = String(clock?.current_period || clock?.period || "").toLowerCase();
+  const matchStatus = String(activeMatch?.status || "").toLowerCase();
+
+  $("startBtn").disabled = hasClock || !activeMatch || matchStatus === "completed";
+  $("pauseBtn").disabled = !hasClock || !running;
+  $("halfBtn").disabled = !hasClock || !running || period !== "first_half";
+  $("secondBtn").disabled = !hasClock || running || matchStatus !== "half_time" || period !== "first_half";
+  $("endBtn").disabled = !hasClock || !running || period !== "second_half";
+  $("addEventButton").disabled = !hasClock || !running;
+}
+
+function renderClock() {
+  if (!activeClock) {
+    $("period").textContent = "MATCH NOT STARTED";
+    $("clock").textContent = "00:00";
+    $("clockStatus").textContent = "WAITING FOR START";
+    $("clockWarning").textContent = "Timer is controlled by the Match Operator.";
+    $("timerPanel").classList.remove("warning-active");
+    setButtonStates();
+    return;
+  }
+
+  const period = String(activeClock.current_period || activeClock.period || "first_half").toLowerCase();
+  const running = !!activeClock.is_running;
+  const nowElapsed = clockBaseSeconds + (running ? Math.floor((Date.now() - clockBaseAt) / 1000) : 0);
+  const halfMinutes = Number(activeClock.half_duration_minutes || activeMatch?.half_duration_minutes || 0);
+  const halfSeconds = halfMinutes * 60;
+  const warningThreshold = halfSeconds > 60 ? halfSeconds - 60 : halfSeconds;
+
+  $("period").textContent = period.replaceAll("_", " ").toUpperCase();
+  $("clock").textContent = formatTime(nowElapsed);
+  $("clockStatus").textContent = running ? "CLOCK RUNNING" : "CLOCK PAUSED";
+  $("clockWarning").textContent = halfSeconds
+    ? "Half duration: " + halfMinutes + " minutes"
+    : "Timer synchronized with the Dhalaibol server.";
+
+  const warningKey = activeMatchId + ":" + period;
+  if (running && halfSeconds > 0 && nowElapsed >= warningThreshold && warningPlayedFor !== warningKey) {
+    warningPlayedFor = warningKey;
+    $("timerPanel").classList.add("warning-active");
+    if ("speechSynthesis" in window) {
+      try { window.speechSynthesis.speak(new SpeechSynthesisUtterance("One minute remaining in this half")); } catch (_) {}
+    }
+    setTimeout(() => $("timerPanel").classList.remove("warning-active"), 3200);
+  }
+
+  setButtonStates();
+}
+
+function startLocalClockDisplay() {
+  if (clockInterval) clearInterval(clockInterval);
+  clockInterval = setInterval(renderClock, 1000);
+}
+
+async function loadClock() {
+  if (!activeMatchId) return;
+  const { data, error } = await supabaseClient.rpc("operator_get_clock", { p_match_id: activeMatchId });
+  if (error) {
+    showMessage("clockMessage", "Clock load error: " + error.message, true);
+    return;
+  }
+  const clock = unwrapRpc(data);
+  if (!clock || data?.success === false) {
+    activeClock = null;
+    clockBaseSeconds = 0;
+    clockBaseAt = Date.now();
+  } else {
+    activeClock = clock;
+    clockBaseSeconds = Number(clock.elapsed_seconds || 0);
+    clockBaseAt = Date.now();
+  }
+  showMessage("clockMessage", "");
+  renderClock();
+}
+
+function eventLabel(type) {
+  return ({
+    goal: "Goal",
+    own_goal: "Own Goal",
+    yellow_card: "Yellow Card",
+    red_card: "Red Card",
+    substitution: "Substitution"
+  })[type] || String(type || "Event").replaceAll("_", " ");
+}
+
+async function loadSummary() {
+  if (!activeMatchId) return;
+  const { data, error } = await supabaseClient.rpc("operator_get_match_summary", { p_match_id: activeMatchId });
+  if (error) {
+    showMessage("eventMessage", "Could not load match summary: " + error.message, true);
+    return;
+  }
+  const summary = unwrapRpc(data);
+  if (!summary || data?.success === false) return;
+
+  $("homeScore").textContent = Number(summary.home_score || 0);
+  $("awayScore").textContent = Number(summary.away_score || 0);
+  $("homeTeamName").textContent = summary.home_team_name || $("homeTeamName").textContent;
+  $("awayTeamName").textContent = summary.away_team_name || $("awayTeamName").textContent;
+
+  const events = Array.isArray(summary.events) ? summary.events : [];
+  const box = $("events");
+  box.replaceChildren();
+  if (!events.length) {
+    const empty = document.createElement("p");
+    empty.className = "note";
+    empty.textContent = "No events recorded.";
+    box.appendChild(empty);
+    return;
+  }
+
+  events.forEach((item) => {
+    const row = document.createElement("div");
+    row.className = "event-row";
+    const minute = item.minute != null ? item.minute + "'" : formatTime(item.elapsed_seconds || 0);
+    const team = item.team_name || "Team";
+    const player = item.player_name || "Player not specified";
+    const related = item.related_player_name ? " → " + item.related_player_name : "";
+    const description = item.description ? " — " + item.description : "";
+    row.textContent = minute + " • " + eventLabel(item.event_type) + " • " + team + " • " + player + related + description;
+    box.appendChild(row);
+  });
+}
+
+function setSelectOptions(select, items, placeholder, valueKey, labelFn) {
+  select.replaceChildren();
+  const first = document.createElement("option");
+  first.value = "";
+  first.textContent = placeholder;
+  select.appendChild(first);
+  items.forEach((item) => {
+    const option = document.createElement("option");
+    option.value = item[valueKey];
+    option.textContent = labelFn(item);
+    select.appendChild(option);
+  });
+}
+
+let confirmedLineups = [];
+function updatePlayerOptions() {
+  const teamId = $("eventTeam").value;
+  const players = confirmedLineups.filter(item => String(item.team_id) === String(teamId));
+  setSelectOptions($("eventPlayer"), players, "Select player", "player_id", item => item.player_name);
+  updateRelatedPlayerOptions();
+}
+
+function updateRelatedPlayerOptions() {
+  const wrap = $("relatedPlayerWrap");
+  const isSubstitution = $("eventType").value === "substitution";
+  wrap.classList.toggle("hidden", !isSubstitution);
+  const teamId = $("eventTeam").value;
+  const selectedPlayer = $("eventPlayer").value;
+  const players = confirmedLineups.filter(item =>
+    String(item.team_id) === String(teamId) && String(item.player_id) !== String(selectedPlayer)
+  );
+  setSelectOptions($("relatedPlayer"), players, "Select player coming in", "player_id", item => item.player_name);
+}
+
+async function loadConfirmedLineups() {
+  const { data: lineups, error } = await supabaseClient
+    .from("match_lineups")
+    .select("player_id,team_id,lineup_role,position,shirt_number,is_captain,is_confirmed")
+    .eq("match_id", activeMatchId)
+    .eq("is_confirmed", true);
+
+  if (error) {
+    showMessage("eventMessage", "Lineup load error: " + error.message, true);
+    confirmedLineups = [];
+    return;
+  }
+
+  const ids = [...new Set((lineups || []).map(item => item.player_id))];
+  if (!ids.length) {
+    confirmedLineups = [];
+    setSelectOptions($("eventTeam"), [], "No confirmed teams", "team_id", item => item.name);
+    setSelectOptions($("eventPlayer"), [], "No confirmed players", "player_id", item => item.player_name);
+    showMessage("eventMessage", "Confirmed lineup is not available yet. Ask Admin to confirm the match lineups.");
+    return;
+  }
+
+  const [{ data: players, error: playerError }, { data: teams, error: teamError }] = await Promise.all([
+    supabaseClient.from("players").select("id,name").in("id", ids),
+    supabaseClient.from("teams").select("id,name").in("id", [...new Set((lineups || []).map(item => item.team_id))])
+  ]);
+
+  if (playerError || teamError) {
+    showMessage("eventMessage", "Could not load lineup names: " + (playerError?.message || teamError?.message), true);
+    return;
+  }
+
+  const playerMap = new Map((players || []).map(item => [String(item.id), item.name]));
+  const teamMap = new Map((teams || []).map(item => [String(item.id), item.name]));
+  confirmedLineups = (lineups || []).map(item => ({
+    ...item,
+    player_name: playerMap.get(String(item.player_id)) || "Player #" + item.player_id,
+    team_name: teamMap.get(String(item.team_id)) || "Team #" + item.team_id
+  }));
+
+  const teamOptions = [...new Map(confirmedLineups.map(item => [String(item.team_id), {team_id:item.team_id,name:item.team_name}])).values()];
+  setSelectOptions($("eventTeam"), teamOptions, "Select player's team", "team_id", item => item.name);
+  updatePlayerOptions();
+  showMessage("eventMessage", confirmedLineups.length + " confirmed lineup player(s) loaded.");
+}
+
+async function loadMatchDetails(matchId) {
+  activeMatchId = Number(matchId);
+  activeMatch = null;
+  activeClock = null;
+  confirmedLineups = [];
+  warningPlayedFor = "";
+
+  const { data: match, error } = await supabaseClient
+    .from("matches")
+    .select("id,match_number,tournament_id,venue_id,home_team_id,away_team_id,round,status,scheduled_at,match_duration_minutes,half_duration_minutes")
+    .eq("id", activeMatchId)
+    .maybeSingle();
+
+  if (error || !match) {
+    showMessage("assignmentStatus", "Could not load assigned match: " + (error?.message || "Match not found"), true);
+    return;
+  }
+  activeMatch = match;
+
+  const teamIds = [match.home_team_id, match.away_team_id].filter(Boolean);
+  const [{ data: teams }, { data: tournament }, { data: venue }] = await Promise.all([
+    supabaseClient.from("teams").select("id,name").in("id", teamIds),
+    supabaseClient.from("tournaments").select("id,name,match_duration_minutes,half_duration_minutes").eq("id", match.tournament_id).maybeSingle(),
+    match.venue_id
+      ? supabaseClient.from("venues").select("id,name,location").eq("id", match.venue_id).maybeSingle()
+      : Promise.resolve({data:null})
+  ]);
+
+  const teamMap = new Map((teams || []).map(item => [String(item.id), item.name]));
+  $("homeTeamName").textContent = teamMap.get(String(match.home_team_id)) || "Home Team";
+  $("awayTeamName").textContent = teamMap.get(String(match.away_team_id)) || "Away Team";
+  $("matchTitle").textContent = "MATCH #" + match.id + (match.round ? " • " + match.round : "");
+  $("matchMeta").textContent = match.scheduled_at ? new Date(match.scheduled_at).toLocaleString("en-IN") : "Schedule not set";
+  $("tournamentInfo").textContent = "Tournament: " + (tournament?.name || "—");
+  $("venueInfo").textContent = "Venue: " + (venue?.name || venue?.location || "—");
+  const duration = match.match_duration_minutes || tournament?.match_duration_minutes;
+  const halfDuration = match.half_duration_minutes || tournament?.half_duration_minutes;
+  $("durationInfo").textContent = "Match Duration: " + (duration ? duration + " minutes" : "—") + (halfDuration ? " • Half: " + halfDuration + " minutes" : "");
+
+  await Promise.all([loadClock(), loadSummary(), loadConfirmedLineups()]);
+  setButtonStates();
+}
+
+async function loadAssignedMatches() {
+  showMessage("assignmentStatus", "Loading your assigned matches...");
+  const { data: assignments, error } = await supabaseClient
+    .from("operator_assignments")
+    .select("match_id,assigned_at")
+    .eq("operator_id", currentUser.id)
+    .eq("is_active", true);
+
+  if (error) {
+    showMessage("assignmentStatus", "Assignment check failed: " + error.message, true);
+    return;
+  }
+  if (!assignments?.length) {
+    $("matchSelect").replaceChildren();
+    showMessage("assignmentStatus", "Your account is verified, but no active match is assigned yet.");
+    return;
+  }
+
+  const ids = assignments.map(item => item.match_id);
+  const { data: matches, error: matchError } = await supabaseClient
+    .from("matches")
+    .select("id,match_number,home_team_id,away_team_id,tournament_id,scheduled_at,status")
+    .in("id", ids);
+
+  if (matchError) {
+    showMessage("assignmentStatus", "Could not load assigned matches: " + matchError.message, true);
+    return;
+  }
+
+  const teamsIds = [...new Set((matches || []).flatMap(m => [m.home_team_id,m.away_team_id]).filter(Boolean))];
+  const { data: teams } = teamsIds.length
+    ? await supabaseClient.from("teams").select("id,name").in("id", teamsIds)
+    : {data:[]};
+  const teamMap = new Map((teams || []).map(item => [String(item.id),item.name]));
+
+  const options = (matches || []).map(match => ({
+    id: match.id,
+    label: "Match #" + match.id + " • " +
+      (teamMap.get(String(match.home_team_id)) || "Home") + " vs " +
+      (teamMap.get(String(match.away_team_id)) || "Away") +
+      (match.scheduled_at ? " • " + new Date(match.scheduled_at).toLocaleString("en-IN") : "")
+  }));
+  setSelectOptions($("matchSelect"), options, "Select assigned match", "id", item => item.label);
+  showMessage("assignmentStatus", options.length + " active assigned match(es) found.");
+  if (options.length) await loadMatchDetails(options[0].id);
+}
+
+async function callClockAction(functionName, successMessage) {
+  if (!activeMatchId) return;
+  showMessage("clockMessage", "Updating match clock...");
+  const { data, error } = await supabaseClient.rpc(functionName, { p_match_id: activeMatchId });
+  if (error) {
+    showMessage("clockMessage", "Clock action failed: " + error.message, true);
+    return;
+  }
+  if (data?.success === false) {
+    showMessage("clockMessage", data.message || data.error || "The clock action was rejected.", true);
+    return;
+  }
+  showMessage("clockMessage", successMessage);
+  await Promise.all([loadClock(), loadSummary()]);
+}
+
+async function addMatchEvent() {
+  if (!activeMatchId || !activeClock?.is_running) {
+    showMessage("eventMessage", "Start the match clock before recording an event.", true);
+    return;
+  }
+  const eventType = $("eventType").value;
+  const teamId = Number($("eventTeam").value);
+  const playerId = Number($("eventPlayer").value);
+  const relatedValue = $("relatedPlayer").value;
+  const relatedPlayerId = eventType === "substitution" && relatedValue ? Number(relatedValue) : null;
+  const description = $("eventDescription").value.trim() || null;
+
+  if (!teamId || !playerId) {
+    showMessage("eventMessage", "Select the player's team and player.", true);
+    return;
+  }
+  if (eventType === "substitution" && !relatedPlayerId) {
+    showMessage("eventMessage", "Select the player coming into the match.", true);
+    return;
+  }
+
+  $("addEventButton").disabled = true;
+  showMessage("eventMessage", "Saving event...");
+  const { data, error } = await supabaseClient.rpc("operator_add_event", {
+    p_match_id: activeMatchId,
+    p_event_type: eventType,
+    p_team_id: teamId,
+    p_player_id: playerId,
+    p_related_player_id: relatedPlayerId,
+    p_description: description
+  });
+  $("addEventButton").disabled = false;
+
+  if (error) {
+    showMessage("eventMessage", "Event save failed: " + error.message, true);
+    return;
+  }
+  if (data?.success === false) {
+    showMessage("eventMessage", data.message || data.error || "Event was rejected.", true);
+    return;
+  }
+  $("eventDescription").value = "";
+  showMessage("eventMessage", "Event saved successfully.");
+  await loadSummary();
+}
+
+async function verifyOperatorAccess() {
+  const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+  if (sessionError || !sessionData.session) {
+    $("operatorLogin").classList.remove("hidden");
+    $("operatorDashboard").classList.add("hidden");
+    showMessage("loginMessage", "");
+    return;
+  }
+
+  currentUser = sessionData.session.user;
+  showMessage("loginMessage", "Verifying Operator account...");
+  const { data: roleData, error: roleError } = await supabaseClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", currentUser.id)
+    .eq("role", "operator")
+    .maybeSingle();
+
+  if (roleError) {
+    showMessage("loginMessage", "Role verification failed: " + roleError.message, true);
+    return;
+  }
+  if (!roleData) {
+    await supabaseClient.auth.signOut();
+    showMessage("loginMessage", "Access denied. This account is not registered as an Operator.", true);
+    return;
+  }
+
+  $("operatorLogin").classList.add("hidden");
+  $("operatorDashboard").classList.remove("hidden");
+  $("operatorIdentity").textContent = currentUser.email || "Verified Operator";
+  await loadAssignedMatches();
+}
+
+$("operatorLoginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = $("loginButton");
+  button.disabled = true;
+  showMessage("loginMessage", "Sending secure login link...");
+  const email = $("operatorEmail").value.trim();
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: false,
+      emailRedirectTo: window.location.origin + window.location.pathname
+    }
+  });
+  button.disabled = false;
+  showMessage("loginMessage", error ? "Login error: " + error.message : "Login link sent. Please check your email.");
+});
+
+$("matchSelect").addEventListener("change", async () => {
+  if ($("matchSelect").value) await loadMatchDetails($("matchSelect").value);
+});
+$("refreshButton").addEventListener("click", async () => {
+  if (activeMatchId) await loadMatchDetails(activeMatchId);
+  else await loadAssignedMatches();
+});
+$("logoutButton").addEventListener("click", async () => {
+  if (clockInterval) clearInterval(clockInterval);
+  const { error } = await supabaseClient.auth.signOut();
+  if (error) {
+    showMessage("assignmentStatus", "Sign out failed: " + error.message, true);
+    return;
+  }
+  currentUser = null;
+  activeMatchId = null;
+  activeMatch = null;
+  activeClock = null;
+  $("operatorDashboard").classList.add("hidden");
+  $("operatorLogin").classList.remove("hidden");
+  showMessage("loginMessage", "You have signed out.");
+});
+$("startBtn").addEventListener("click", () => callClockAction("operator_start_clock", "Match clock started."));
+$("pauseBtn").addEventListener("click", () => callClockAction("operator_pause_clock", "Match clock paused."));
+$("halfBtn").addEventListener("click", () => callClockAction("operator_end_first_half", "First half ended."));
+$("secondBtn").addEventListener("click", () => callClockAction("operator_start_second_half", "Second half started."));
+$("endBtn").addEventListener("click", () => {
+  if (window.confirm("End this match and mark it completed?")) {
+    callClockAction("operator_end_match", "Match marked as completed.");
+  }
+});
+$("eventType").addEventListener("change", updateRelatedPlayerOptions);
+$("eventTeam").addEventListener("change", updatePlayerOptions);
+$("eventPlayer").addEventListener("change", updateRelatedPlayerOptions);
+$("addEventButton").addEventListener("click", addMatchEvent);
+
+startLocalClockDisplay();
 verifyOperatorAccess();
 </script>
 </body>
