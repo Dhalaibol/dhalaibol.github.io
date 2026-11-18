@@ -1,903 +1,237 @@
-
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="bn">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dhalaibol | Admin Dashboard</title>
-
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f1f5f2;
-  color: #17251c;
-}
-
-header {
-  background: #075b32;
-  color: white;
-  padding: 22px;
-}
-
-.brand {
-  font-size: 27px;
-  font-weight: 800;
-}
-
-.subtitle {
-  margin-top: 6px;
-  font-size: 15px;
-}
-
-.container {
-  max-width: 760px;
-  margin: auto;
-  padding: 18px;
-}
-
-.card {
-  background: white;
-  padding: 24px;
-  border-radius: 18px;
-  margin-bottom: 18px;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.05);
-}
-
-h2 {
-  margin-top: 0;
-  font-size: 22px;
-}
-
-label {
-  display: block;
-  font-weight: 700;
-  margin-top: 16px;
-  margin-bottom: 8px;
-}
-
-input, select {
-  width: 100%;
-  padding: 14px;
-  border: 1px solid #d5ded7;
-  border-radius: 10px;
-  font-size: 16px;
-  background: white;
-}
-
-button {
-  width: 100%;
-  border: none;
-  border-radius: 10px;
-  padding: 15px;
-  margin-top: 16px;
-  background: #087b43;
-  color: white;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.secondary {
-  background: #eaf3ed;
-  color: #075b32;
-}
-
-.status {
-  margin-top: 14px;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-
-.note {
-  color: #67756b;
-  line-height: 1.6;
-}
-
-.hidden {
-  display: none;
-}
-
-.match-item {
-  background: #f2f7f3;
-  padding: 14px;
-  border-radius: 10px;
-  margin-top: 10px;
-}
-
-footer {
-  text-align: center;
-  padding: 20px;
-  color: #718076;
-}
+:root{--green:#087b43;--deep:#075b32;--ink:#17251c;--muted:#66756b;--line:#e2e9e4;--bg:#f3f7f4;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Arial,sans-serif}
+header{background:linear-gradient(120deg,#064b2b,#0b8050);color:white;padding:20px max(18px,calc((100% - 1180px)/2))}
+.brand{font-size:24px;font-weight:800;letter-spacing:.5px}.subtitle{opacity:.85;font-size:13px}
+main{max-width:1180px;margin:auto;padding:20px}.hidden{display:none!important}
+.card{background:white;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 5px 22px #143d2010}
+h1,h2,h3,p{margin-top:0}h2{font-size:19px;margin-bottom:6px}h3{font-size:16px;margin-bottom:8px}.muted,.note{color:var(--muted)}.note{font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+label{display:block;font-weight:700;font-size:13px;margin:12px 0 6px}input,select,textarea{width:100%;border:1px solid #d4ded7;border-radius:10px;padding:12px;font:inherit;background:white;color:var(--ink)}textarea{min-height:76px;resize:vertical}
+button{border:0;border-radius:10px;background:var(--green);color:white;padding:11px 15px;font-weight:700;cursor:pointer}button:disabled{opacity:.55;cursor:wait}.secondary{background:#eaf3ed;color:var(--deep)}.danger{background:#fff0ed;color:#a33220}.small{padding:7px 10px;font-size:12px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.actions button{width:auto}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.nav button{background:white;color:var(--deep);border:1px solid var(--line)}.nav button.active{background:var(--deep);color:white}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:#f4f8f5;border:1px solid var(--line);border-radius:12px;padding:13px}.stat strong{display:block;font-size:23px}.stat span{font-size:12px;color:var(--muted)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.item{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}.pill{font-size:11px;padding:4px 8px;border-radius:99px;background:#edf5ef;color:#17643b}.pill.gray{background:#f0f2f1;color:#5f6b63}
+.player{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #edf1ee}.player:last-child{border:0}
+.progress{height:8px;background:#e9efeb;border-radius:20px;overflow:hidden}.progress i{display:block;height:100%;background:#16834b}
+.message{margin-top:10px;font-size:13px;overflow-wrap:anywhere}.success{color:#137342}.error{color:#b42318}
+details summary{cursor:pointer;font-weight:700}.team-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+.location-tools{display:flex;gap:8px;align-items:center;margin-top:7px}.location-tools button{white-space:nowrap}.map-modal{position:fixed;inset:0;background:#07180fd9;z-index:1000;display:none;align-items:center;justify-content:center;padding:14px}.map-modal.open{display:flex}.map-panel{width:min(900px,100%);background:white;border-radius:18px;padding:16px;box-shadow:0 20px 70px #0005}.map-search{display:flex;gap:8px;margin:10px 0}.map-search input{flex:1;min-width:0}.map-results{max-height:150px;overflow:auto}.map-result{display:block;width:100%;text-align:left;background:#f1f6f2;color:#183b28;border:1px solid #dce9df;margin:5px 0;font-weight:500}.map-canvas{height:min(52vh,440px);min-height:280px;border-radius:12px;z-index:1}.map-footer{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;margin-top:12px}.map-footer button{flex:1}
+@media(max-width:720px){main{padding:12px}.card{padding:15px}.grid,.grid3,.team-grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}header{padding:16px}}
 </style>
 </head>
-
 <body>
-
-<header>
-  <div class="brand">⚽ DHALAIBOL</div>
-  <div class="subtitle">ADMIN MANAGEMENT PANEL</div>
-</header>
-
-<main class="container">
-
-  <!-- Admin Login -->
-  <section class="card" id="loginCard">
-    <h2>Admin Login</h2>
-
-    <p class="note">
-      Enter your registered Admin email address.
-      A secure Magic Link will be sent to your email.
-    </p>
-
-    <form id="loginForm">
-      <label for="adminEmail">Admin Email</label>
-      <input
-        type="email"
-        id="adminEmail"
-        placeholder="Enter Admin email"
-        required
-      >
-
-      <button type="submit" id="loginButton">
-        Send Magic Link
-      </button>
-    </form>
-
-    <p class="status" id="loginMessage"></p>
-  </section>
-
-
-  <!-- Admin Dashboard -->
-  <section class="hidden" id="adminDashboard">
-
-    <div class="card">
-      <h2>Admin Information</h2>
-
-      <p>
-        <strong>Admin:</strong>
-        <span id="adminIdentity">Loading...</span>
-      </p>
-
-      <p class="note">
-        Only verified Admin accounts can manage Operator invitations.
-      </p>
-
-      <button class="secondary" id="logoutButton">
-        Sign Out
-      </button>
-    </div>
-
-<!-- CLUB MANAGEMENT -->
-<div class="card">
-  <h2>Club Management</h2>
-  <p class="note">Add and manage football clubs.</p>
-
-  <form id="clubForm">
-    <input
-      class="field"
-      type="text"
-      id="clubName"
-      placeholder="Enter Club Name"
-      required
-    >
-
-    <button
-      class="primary"
-      type="submit"
-      style="width:100%;margin-top:12px"
-    >
-      Add Club
-    </button>
-  </form>
-
-  <div id="clubMessage" class="status"></div>
-  <div id="clubList" class="status"></div>
+<header><div class="brand">⚽ DHALAIBOL</div><div class="subtitle">ADMIN MANAGEMENT · TOURNAMENT RECORDS · TEAMS · FIXTURES</div></header>
+<main>
+<div class="map-modal" id="mapModal" role="dialog" aria-modal="true" aria-label="Choose tournament location"><div class="map-panel"><div class="row"><div><h2>ম্যাপে মাঠের সঠিক জায়গা বেছে নিন</h2><p class="note">জায়গার নাম সার্চ করুন অথবা ম্যাপে ট্যাপ করে পিন বসান। পিন টেনে সরানো যাবে।</p></div><button type="button" class="secondary small" id="closeMap">বন্ধ</button></div><div class="map-search"><input id="mapSearchInput" placeholder="মাঠ, ক্লাব বা এলাকার নাম লিখুন"><button type="button" id="mapSearchButton">Search</button></div><div id="mapResults" class="map-results"></div><div id="mapCanvas" class="map-canvas"></div><div class="map-footer"><span class="note" id="mapPickedText">এখনও কোনো জায়গা নির্বাচন করা হয়নি</span><button type="button" id="useMapLocation">এই লোকেশন ব্যবহার করুন</button></div></div></div>
+<section class="card" id="loginCard"><h2>Admin Login</h2><p class="note">নিবন্ধিত Admin ইমেইলে Secure Magic Link পাঠানো হবে।</p>
+<form id="loginForm"><label>Admin Email</label><input id="adminEmail" type="email" value="susantamaji.in@gmail.com" readonly required><p class="note">নির্ধারিত Admin ইমেইল। অন্য ইমেইল দিয়ে Admin Login করা যাবে না।</p><div class="actions"><button id="loginButton">Send Magic Link</button></div></form><div id="loginMessage" class="message"></div></section>
+<section id="adminDashboard" class="hidden">
+<div class="card"><div class="row"><div><h2>Admin Workspace</h2><div class="note">Signed in: <strong id="adminIdentity"></strong></div></div><button id="logoutButton" class="secondary small">Sign out</button></div></div>
+<div class="nav">
+<button class="active" data-tab="overview">Overview</button><button data-tab="tournaments">Tournaments</button><button data-tab="teams">Teams & Players</button><button data-tab="fixtures">Fixtures & Draw Results</button><button data-tab="operators">Operator Assignment</button>
 </div>
-<!-- END CLUB MANAGEMENT -->
-<!-- TOURNAMENT MANAGEMENT -->
-<div class="card">
-  <h2>Tournament Management</h2>
-  <p class="note">Create and manage football tournaments.</p>
-
-  <form id="tournamentForm">
-
-    <label for="tournamentName">Tournament Name</label>
-    <input class="field" type="text" id="tournamentName"
-      placeholder="Enter Tournament Name" required>
-
-    <label for="organizerClub">Organizer Club</label>
-    <select class="field" id="organizerClub" required>
-      <option value="">Select Organizer Club</option>
-    </select>
-
-    <label for="tournamentEdition">Edition</label>
-    <input class="field" type="text" id="tournamentEdition"
-      placeholder="Example: 2026">
-
-    <label for="tournamentLocation">Location</label>
-    <input class="field" type="text" id="tournamentLocation"
-      placeholder="Enter Tournament Location">
-
-    <label for="tournamentStart">Start Date</label>
-    <input class="field" type="date" id="tournamentStart">
-
-    <label for="tournamentEnd">End Date</label>
-    <input class="field" type="date" id="tournamentEnd">
-
-    <label for="matchDuration">Match Duration (Minutes)</label>
-    <input class="field" type="number" id="matchDuration"
-      min="2" placeholder="Example: 40" required>
-
-    <button class="primary" type="submit"
-      style="width:100%;margin-top:12px">
-      Create Tournament
-    </button>
-
-  </form>
-
-  <div id="tournamentMessage" class="status"></div>
-  <div id="tournamentList" class="status"></div>
+<section id="tab-overview">
+<div class="stats"><div class="stat"><strong id="countTournaments">—</strong><span>Tournaments</span></div><div class="stat"><strong id="countTeams">—</strong><span>Teams recorded</span></div><div class="stat"><strong id="countMatches">—</strong><span>Matches created</span></div><div class="stat"><strong id="countClubs">—</strong><span>Clubs</span></div></div>
+<div class="card" style="margin-top:16px"><h2>কাজের ধাপ</h2><p class="note">প্রথমে Tournament-এর তথ্য তৈরি করুন। বাস্তবে যে ক্লাব আয়োজন করছে, তাদের কাছ থেকে পাওয়া তথ্য অনুযায়ী Team ও Player-এর রেকর্ড যোগ করুন। আয়োজক ক্লাবের লটারির ফল Admin এখানে ইনপুট করে Fixture তৈরি করবে। ম্যাচ তৈরি হলে Operator assign করা যাবে।</p><div class="actions"><button data-go="tournaments">+ Create Tournament</button><button class="secondary" data-go="teams">+ Add Team</button><button class="secondary" data-go="fixtures">Create Fixture</button></div></div>
+<div id="overviewRecent"></div></section>
+<section id="tab-tournaments" class="hidden">
+<div class="card"><h2>Create Tournament</h2><p class="note">শুরুতে শুধু আয়োজনের তথ্য দিয়েও Tournament Draft হিসেবে রাখা যাবে। Team পরে যোগ হবে।</p>
+<form id="tournamentForm">
+<div class="grid"><div><label>Tournament Name *</label><input id="tName" required placeholder="যেমন: Panskura Cup"></div><div><label>Organizer Club *</label><select id="tOrganizer" required></select></div>
+<div><label>Edition / Year</label><input id="tEdition" type="number" placeholder="2027"></div><div><label>Location / Ground Search</label><input id="tLocation" placeholder="মাঠ, ক্লাব বা এলাকার নাম লিখুন"><div class="location-tools"><button type="button" class="secondary small" id="tMapButton">📍 Map-এ পিন বসান</button><span class="note" id="tMapStatus">লোকেশন ঐচ্ছিক</span></div><input type="hidden" id="tAddress"><input type="hidden" id="tLatitude"><input type="hidden" id="tLongitude"></div>
+<div><label>Start Date</label><input id="tStart" type="date"></div><div><label>End Date</label><input id="tEnd" type="date"></div>
+<div><label>Entry Fee (প্রতি টিম) ₹</label><input id="tEntry" type="number" min="0" step="0.01" placeholder="যেমন 1000"></div><div><label>টুর্নামেন্টে ঠিক কতটি দল নেওয়া হবে? *</label><input id="tReportedTeams" type="number" min="1" step="1" required placeholder="যেমন 16"><p class="note">এই সংখ্যাই Dhalaibol-এ দলের নির্দিষ্ট রেজিস্ট্রেশন সীমা। ১৬ দিলে ১৭তম দল যোগ করা যাবে না।</p></div>
+<div><label>Match Duration (মিনিট)</label><input id="tDuration" type="number" min="2" placeholder="যেমন 20"></div><div><label>Half Duration (মিনিট)</label><input id="tHalf" type="number" min="1" placeholder="খালি রাখলে অর্ধেক হবে"></div>
 </div>
-<!-- END TOURNAMENT MANAGEMENT -->
-
-    <!-- Match List -->
-    <div class="card">
-      <h2>Scheduled Matches</h2>
-
-      <p class="note">
-        Matches without an active Operator assignment will appear here.
-      </p>
-
-      <button class="secondary" id="refreshMatches">
-        Refresh Match List
-      </button>
-
-      <div id="matchList" class="status">
-        Loading scheduled matches...
-      </div>
-    </div>
-
-
-    <!-- Operator Invitation -->
-    <div class="card">
-      <h2>Invite Match Operator</h2>
-
-      <p class="note">
-        Enter the Operator details provided by the club
-        and assign the Operator to one scheduled match.
-      </p>
-
-      <form id="inviteForm">
-
-        <label for="operatorName">Operator Full Name</label>
-
-        <input
-          type="text"
-          id="operatorName"
-          placeholder="Enter Operator name"
-          required
-        >
-
-        <label for="operatorEmail">Operator Email</label>
-
-        <input
-          type="email"
-          id="operatorEmail"
-          placeholder="Enter Operator email"
-          required
-        >
-
-        <label for="matchSelect">Select Match</label>
-
-        <select id="matchSelect" required>
-          <option value="">Loading matches...</option>
-        </select>
-
-        <button type="submit" id="inviteButton">
-          Send Operator Invitation
-        </button>
-
-      </form>
-
-      <p class="status" id="inviteMessage"></p>
-    </div>
-
-  </section>
-
+<hr><h3>Prize Distribution (₹)</h3><div class="grid"><div><label>First Prize</label><input id="tFirst" type="number" min="0" placeholder="0"></div><div><label>Second Prize</label><input id="tSecond" type="number" min="0" placeholder="0"></div><div><label>Third Prize</label><input id="tThird" type="number" min="0" placeholder="0"></div><div><label>Semifinalist Prize</label><input id="tSemi" type="text" placeholder="যেমন ₹2,000 each"></div><div><label>Man of the Match Prize</label><input id="tMom" type="text" placeholder="যেমন Trophy / ₹500"></div></div>
+<label>Tournament Rules / Notes</label><textarea id="tRules" placeholder="Substitution, red card, tie-breaker, entry fee terms ইত্যাদি"></textarea>
+<div class="actions"><button id="saveTournament">Save as Draft</button><button type="button" class="secondary" id="clearTournament">Clear</button></div><div id="tournamentMessage" class="message"></div></form></div>
+<div class="card"><div class="row"><div><h2>All Tournaments</h2><p class="note">Draft tournament-ও এখানে দেখা ও পরে Publish করা যাবে।</p></div><button id="refreshTournaments" class="secondary small">Refresh</button></div><div id="tournamentList"></div></div>
+</section>
+<section id="tab-teams" class="hidden">
+<div class="card"><h2>Tournament Team Entry</h2><p class="note">এটি Dhalaibol-এ বাস্তব টুর্নামেন্টের তথ্য নথিভুক্ত করার ধাপ—ক্লাবের নিজস্ব অংশগ্রহণ বা খেলার অনুমতি নেওয়ার রেজিস্ট্রেশন নয়। আয়োজক ক্লাবের কাছ থেকে পাওয়া Team-এর নাম ও তথ্য এখানে যোগ করুন।</p>
+<form id="teamForm"><div class="grid"><div><label>Tournament *</label><select id="teamTournament" required></select></div><div><label>Team Name *</label><input id="teamName" required placeholder="Panskura Youngstar Brigade"></div><div><label>Associated Club *</label><select id="teamClub" required></select></div></div>
+<div class="actions"><button id="saveTeam">Save Team Record</button></div><div id="teamMessage" class="message"></div></form></div>
+<div class="card"><h2>Player Position Options</h2><p class="note">Admin এই তালিকা পরিচালনা করবেন। Player-এর স্বাভাবিক পজিশন এখান থেকে বেছে নেওয়া হবে।</p><form id="positionForm" class="grid"><div><label>Position Name (English)</label><input id="positionName" required></div><div><label>বাংলা নাম</label><input id="positionBn"></div><div class="actions"><button class="small">Add Position</button></div></form><div id="positionList"></div></div>
+<div class="card"><div class="row"><div><h2>Recorded Teams & Player List</h2><p class="note">আয়োজক ক্লাব/দলের কাছ থেকে পাওয়া খেলোয়াড়দের তালিকা ও তাদের স্বাভাবিক পজিশন নথিভুক্ত করুন। কোনো নির্দিষ্ট squad size এখানে ধরে নেওয়া হচ্ছে না।</div><button class="secondary small" id="refreshTeams">Refresh</button></div>
+<label>Select Tournament</label><select id="rosterTournament"></select><div id="teamRoster"></div></div>
+</section>
+<section id="tab-fixtures" class="hidden">
+<div class="card"><h2>Fixture / Draw Result Entry</h2><p class="note">Lottery আয়োজক ক্লাব করবে। Admin শুধু তাদের দেওয়া Team Pairing ও schedule এখানে রেকর্ড করবে। কোনো automatic lottery হবে না।</p>
+<form id="fixtureForm"><div class="grid"><div><label>Tournament *</label><select id="fTournament" required></select></div><div><label>Round *</label><select id="fRound"><option>First Round</option><option>Round of 16</option><option>Quarter Final</option><option>Semi Final</option><option>Final</option><option>Third Place</option></select></div>
+<div><label>Team A *</label><select id="fHome" required></select></div><div><label>Team B *</label><select id="fAway" required></select></div>
+<div><label>Match Number *</label><input id="fNumber" type="number" min="1" required></div><div><label>Match Date *</label><input id="fDate" type="date" required></div><div><label>Kick-off Time *</label><input id="fTime" type="time" required></div><div><label>Venue *</label><select id="fVenue" required></select></div>
+<div><label>Match Duration (minutes)</label><input id="fDuration" type="number" min="2"></div><div><label>Half Duration (minutes)</label><input id="fHalf" type="number" min="1"></div></div>
+<div class="actions"><button id="saveFixture">Save Match as Unpublished</button></div><div id="fixtureMessage" class="message"></div></form>
+<hr><h3>Add / Manage Venue</h3><form id="venueForm"><div class="grid"><div><label>Venue Name</label><input id="venueName" required placeholder="Field / Ground name"></div><div><label>Address / Ground Search</label><input id="venueAddress" placeholder="Village, Block, District"><div class="location-tools"><button type="button" class="secondary small" id="venueMapButton">📍 Map-এ পিন বসান</button><span class="note" id="venueMapStatus">লোকেশন ঐচ্ছিক</span></div><input type="hidden" id="venueLatitude"><input type="hidden" id="venueLongitude"></div></div><button class="secondary">Add Venue</button><div id="venueMessage" class="message"></div></form></div>
+<div class="card"><h2>Created Matches</h2><div id="fixtureList"></div></div>
+</section>
+<section id="tab-operators" class="hidden">
+<div class="card"><h2>Invite & Assign Match Operator</h2><p class="note">Operator-কে নির্দিষ্ট একটি scheduled match-এ assign করা হবে। Secure invitation link ইমেইলে যাবে।</p><form id="inviteForm"><div class="grid"><div><label>Operator Name</label><input id="operatorName" required></div><div><label>Operator Email</label><input id="operatorEmail" type="email" required></div><div style="grid-column:1/-1"><label>Unassigned Match</label><select id="matchSelect" required></select></div></div><button id="inviteButton">Send Operator Invitation</button><div id="inviteMessage" class="message"></div></form><hr><div id="matchList"></div></div></section>
+</section>
 </main>
-
-<footer>
-  Dhalaibol Football Platform
-</footer>
-
-
 <script>
-
-// Supabase Connection
-
-const SUPABASE_URL =
-  "https://gshaezskvhhudicvpzst.supabase.co";
-
-const SUPABASE_ANON_KEY =
-  "sb_publishable_sN0tZnmfNbyCMBqJLbPcgQ_8mttlOhH";
-
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
-
-
-// HTML Elements
-
-const loginCard = document.getElementById("loginCard");
-const dashboard = document.getElementById("adminDashboard");
-const loginMessage = document.getElementById("loginMessage");
-const inviteMessage = document.getElementById("inviteMessage");
-const matchSelect = document.getElementById("matchSelect");
-// Club Management ElementstournamentForm.addEventListener
-const clubForm = document.getElementById("clubForm");
-const clubName = document.getElementById("clubName");
-const clubMessage = document.getElementById("clubMessage");
-const clubList = document.getElementById("clubList");
-  // Tournament Management Elements
-const tournamentForm = document.getElementById("tournamentForm");
-const tournamentName = document.getElementById("tournamentName");
-const organizerClub = document.getElementById("organizerClub");
-const tournamentEdition = document.getElementById("tournamentEdition");
-const tournamentLocation = document.getElementById("tournamentLocation");
-const tournamentStart = document.getElementById("tournamentStart");
-const tournamentEnd = document.getElementById("tournamentEnd");
-const matchDuration = document.getElementById("matchDuration");
-const tournamentMessage = document.getElementById("tournamentMessage");
-const tournamentList = document.getElementById("tournamentList");
-// Load Clubs from Supabase
-async function loadClubs() {
-  clubList.textContent = "Loading clubs...";
-
-  const { data, error } = await supabaseClient
-    .from("clubs")
-    .select("id, name")
-    .order("name");
-
-  if (error) {
-    clubList.textContent = "Error loading clubs: " + error.message;
-    return;
-  }
-// Populate Organizer Club Dropdown
-organizerClub.innerHTML =
-  '<option value="">Select Organizer Club</option>';
-
-data.forEach((club) => {
-  const option = document.createElement("option");
-  option.value = club.id;
-  option.textContent = club.name;
-  organizerClub.appendChild(option);
-});
-  clubList.replaceChildren();
-
-  if (!data || data.length === 0) {
-    clubList.textContent = "No clubs added yet.";
-    return;
-  }
-
-  const ul = document.createElement("ul");
-
-  data.forEach((club) => {
-    const li = document.createElement("li");
-    li.textContent = club.name;
-    ul.appendChild(li);
-  });
-
-  clubList.appendChild(ul);
+const SUPABASE_URL="https://gshaezskvhhudicvpzst.supabase.co";
+const SUPABASE_KEY="sb_publishable_sN0tZnmfNbyCMBqJLbPcgQ_8mttlOhH";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+const state={clubs:[],tournaments:[],teams:[],venues:[],matches:[],positions:[]};
+function msg(id,text,kind=""){const el=$(id);el.textContent=text;el.className="message "+kind}
+function optionList(el,items,placeholder,labelFn){el.replaceChildren();const p=document.createElement("option");p.value="";p.textContent=placeholder;el.append(p);items.forEach(x=>{const o=document.createElement("option");o.value=x.id;o.textContent=labelFn(x);el.append(o)})}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function tab(name){document.querySelectorAll("[id^=tab-]").forEach(x=>x.classList.add("hidden"));$("tab-"+name).classList.remove("hidden");document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===name))}
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>tab(b.dataset.tab));
+document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>tab(b.dataset.go));
+async function loadBase(){
+ const [c,t,tm,v,m,po]=await Promise.all([
+ db.from("clubs").select("id,name").order("name"),
+ db.from("tournaments").select("id,name,organizer_club_id,location,start_date,end_date,entry_fee,first_prize,second_prize,third_prize,semifinalist_prize,man_of_the_match_prize,match_duration_minutes,half_duration_minutes,status,is_published,rules,registration_team_limit").order("created_at",{ascending:false}),
+ db.from("teams").select("id,name,club_id,captain_player_id").order("name"),
+ db.from("venues").select("id,name,location,address,latitude,longitude").order("name"),
+ db.from("matches").select("id,tournament_id,home_team_id,away_team_id,venue_id,round,match_number,scheduled_at,status,is_published,match_duration_minutes,half_duration_minutes").order("scheduled_at"),
+ db.from("player_position_options").select("id,name,display_name_bn,sort_order,is_active").order("sort_order")
+ ]);
+ for(const [r,n] of [[c,"clubs"],[t,"tournaments"],[tm,"teams"],[v,"venues"],[m,"matches"],[po,"positions"]])if(r.error)throw Error(n+": "+r.error.message);
+ Object.assign(state,{clubs:c.data||[],tournaments:t.data||[],teams:tm.data||[],venues:v.data||[],matches:m.data||[],positions:po.data||[]});
+ optionList($("tOrganizer"),state.clubs,"আয়োজক ক্লাব বেছে নিন",x=>x.name);
+ optionList($("teamClub"),state.clubs,"টিমের সংশ্লিষ্ট ক্লাব বেছে নিন",x=>x.name);
+ const ts=state.tournaments;["teamTournament","rosterTournament","fTournament"].forEach(id=>optionList($(id),ts,"Tournament বেছে নিন",x=>x.name));
+ optionList($("fVenue"),state.venues,"মাঠ বেছে নিন",x=>x.name+" — "+(x.location||x.address||""));
+ $("countTournaments").textContent=ts.length;$("countTeams").textContent=state.teams.length;$("countMatches").textContent=state.matches.length;$("countClubs").textContent=state.clubs.length;
+ renderTournaments();renderFixtures();renderOperatorMatches();renderPositionOptions();await loadRoster();
 }
-
-// Add Club
-clubForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const name = clubName.value.trim();
-
-  if (!name) return;
-
-  const submitButton = clubForm.querySelector('button[type="submit"]');
-  submitButton.disabled = true;
-  clubMessage.textContent = "Saving club...";
-
-  const { error } = await supabaseClient
-    .from("clubs")
-    .insert({ name });
-
-  submitButton.disabled = false;
-
-  if (error) {
-    clubMessage.textContent = "Error: " + error.message;
-    return;
-  }
-
-  clubMessage.textContent = "Club added successfully!";
-  clubForm.reset();
-
-  await loadClubs();
-});
-  // Create Tournament
-tournamentForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const name = tournamentName.value.trim();
-  const clubId = Number(organizerClub.value);
-  const edition = tournamentEdition.value.trim();
-  const location = tournamentLocation.value.trim();
-  const startDate = tournamentStart.value;
-  const endDate = tournamentEnd.value;
-  const duration = Number(matchDuration.value);
-
-  if (!name || !clubId || !duration) {
-    tournamentMessage.textContent = "Please fill all required fields.";
-    return;
-  }
-
-  const button = tournamentForm.querySelector('button[type="submit"]');
-  button.disabled = true;
-  tournamentMessage.textContent = "Saving tournament...";
-
-  const { error } = await supabaseClient
-    .from("tournaments")
-    .insert({
-      name: name,
-      organizer_club_id: clubId,
-      edition: edition || null,
-      location: location || null,
-      start_date: startDate || null,
-      end_date: endDate || null,
-      match_duration_minutes: duration,
-      status: "upcoming",
-      is_published: false
-    });
-
-  button.disabled = false;
-
-  if (error) {
-    tournamentMessage.textContent = "Error: " + error.message;
-    return;
-  }
-
-  tournamentMessage.textContent = "Tournament created successfully!";
-  tournamentForm.reset();
-});
-// Admin Login
-
-document.getElementById("loginForm").addEventListener(
-  "submit",
-  async (event) => {
-
-    event.preventDefault();
-
-    const email = document.getElementById("adminEmail")
-      .value.trim();
-
-    const button = document.getElementById("loginButton");
-
-    button.disabled = true;
-    loginMessage.textContent = "Sending secure Magic Link...";
-
-    const { error } = await supabaseClient.auth.signInWithOtp({
-      email: email,
-      options: {
-        shouldCreateUser: false,
-        emailRedirectTo: window.location.origin + "/admin.html"
-      }
-    });
-
-    button.disabled = false;
-
-    if (error) {
-      loginMessage.textContent = "Login error: " + error.message;
-    } else {
-      loginMessage.textContent =
-        "Magic Link sent. Please check your email.";
-    }
-
-  }
-);
-
-
-// Verify Admin Session and Role
-
-async function checkAdminAccess() {
-
-  loginCard.classList.remove("hidden");
-  dashboard.classList.add("hidden");
-
-  loginMessage.textContent = "Checking Admin login...";
-
-  const { data: userData, error: userError } =
-    await supabaseClient.auth.getUser();
-
-  if (userError || !userData.user) {
-
-    loginMessage.textContent =
-      "Please sign in using your registered Admin email.";
-
-    return;
-  }
-
-  const user = userData.user;
-
-  // Verify Admin role
-
-  const { data: roleData, error: roleError } =
-    await supabaseClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle();
-
-  if (roleError) {
-
-    loginMessage.textContent =
-      "Role verification error: " + roleError.message;
-
-    return;
-  }
-
-  if (!roleData) {
-
-    loginMessage.textContent =
-      "Access denied. This account is not an Admin.";
-
-    return;
-  }
-
-  // Admin verified
-
-  loginCard.classList.add("hidden");
-  dashboard.classList.remove("hidden");
-
-  document.getElementById("adminIdentity").textContent =
-    user.email || "Verified Admin";
-
-  loginMessage.textContent = "";
-
-  await loadScheduledMatches();
-await loadClubs();
+function renderTournaments(){
+ const host=$("tournamentList");host.replaceChildren();
+ if(!state.tournaments.length){host.textContent="এখনও কোনো Tournament নেই।";return}
+ state.tournaments.forEach(t=>{
+ const org=state.clubs.find(c=>String(c.id)===String(t.organizer_club_id));
+ const count=state.matches.filter(m=>String(m.tournament_id)===String(t.id)).length;
+ const box=document.createElement("div");box.className="item";
+ box.innerHTML='<div class="row"><strong>'+esc(t.name)+'</strong><span class="pill '+(t.is_published?"":"gray")+'">'+(t.is_published?"Published":"Draft")+'</span></div><p class="note">'+esc(org?.name||"Organizer not set")+' · '+esc(t.location||"Location pending")+' · '+(t.registration_team_limit??'দলের সংখ্যা জানানো হয়নি')+'টি দল (নির্ধারিত সীমা) · '+count+' matches</p><p class="note">Entry Fee: ₹'+(t.entry_fee??"—")+' · Prize: ₹'+(t.first_prize??"—")+' / ₹'+(t.second_prize??"—")+' / ₹'+(t.third_prize??"—")+'</p><div class="actions"><button class="small secondary" data-publish="'+t.id+'" data-value="'+(!t.is_published)+'">'+(t.is_published?"Unpublish":"Publish")+'</button><button class="small secondary" data-select="'+t.id+'">Manage Teams / Fixtures</button></div>';
+ host.append(box);
+ });
+ host.querySelectorAll("[data-publish]").forEach(b=>b.onclick=async()=>{const id=Number(b.dataset.publish);const {error}=await db.from("tournaments").update({is_published:b.dataset.value==="true"}).eq("id",id);if(error)return alert(error.message);await loadBase()});
+ host.querySelectorAll("[data-select]").forEach(b=>b.onclick=()=>{const id=b.dataset.select;["teamTournament","rosterTournament","fTournament"].forEach(x=>$(x).value=id);tab("teams");loadRoster()});
 }
-
-
-// Load Scheduled Matches
-
-async function loadScheduledMatches() {
-
-  matchSelect.innerHTML =
-    '<option value="">Loading matches...</option>';
-
-  const matchList = document.getElementById("matchList");
-
-  matchList.textContent = "Loading scheduled matches...";
-
-  const { data: matches, error: matchError } =
-    await supabaseClient
-      .from("matches")
-      .select(
-        "id,tournament_id,home_team_id,away_team_id,round,match_number,scheduled_at,status"
-      )
-      .eq("status", "scheduled")
-      .order("scheduled_at", { ascending: true });
-
-  if (matchError) {
-
-    matchSelect.innerHTML =
-      '<option value="">Could not load matches</option>';
-
-    matchList.textContent =
-      "Match loading error: " + matchError.message;
-
-    return;
-  }
-
-  // Find already assigned matches
-
-  const { data: assignments, error: assignmentError } =
-    await supabaseClient
-      .from("operator_assignments")
-      .select("match_id")
-      .eq("is_active", true);
-
-  if (assignmentError) {
-
-    matchSelect.innerHTML =
-      '<option value="">Assignment check failed</option>';
-
-    matchList.textContent =
-      "Assignment loading error: " + assignmentError.message;
-
-    return;
-  }
-
-  const assignedIds = new Set(
-    (assignments || []).map(item => String(item.match_id))
-  );
-
-  const availableMatches = (matches || []).filter(
-    match => !assignedIds.has(String(match.id))
-  );
-
-  if (availableMatches.length === 0) {
-
-    matchSelect.innerHTML =
-      '<option value="">No available scheduled matches</option>';
-
-    matchList.textContent =
-      "No unassigned scheduled matches found.";
-
-    return;
-  }
-
-  // Load Team Names
-
-  const teamIds = [
-    ...new Set(
-      availableMatches.flatMap(match => [
-        match.home_team_id,
-        match.away_team_id
-      ])
-    )
-  ];
-
-  const { data: teams, error: teamError } =
-    await supabaseClient
-      .from("teams")
-      .select("id,name")
-      .in("id", teamIds);
-
-  if (teamError) {
-
-    matchList.textContent =
-      "Team loading error: " + teamError.message;
-
-    matchSelect.innerHTML =
-      '<option value="">Could not load teams</option>';
-
-    return;
-  }
-
-  // Load Tournament Names
-
-  const tournamentIds = [
-    ...new Set(
-      availableMatches.map(match => match.tournament_id)
-    )
-  ];
-
-  const { data: tournaments, error: tournamentError } =
-    await supabaseClient
-      .from("tournaments")
-      .select("id,name")
-      .in("id", tournamentIds);
-
-  if (tournamentError) {
-
-    matchList.textContent =
-      "Tournament loading error: " + tournamentError.message;
-
-    matchSelect.innerHTML =
-      '<option value="">Could not load tournaments</option>';
-
-    return;
-  }
-
-  const teamMap = new Map(
-    (teams || []).map(team => [String(team.id), team.name])
-  );
-
-  const tournamentMap = new Map(
-    (tournaments || []).map(
-      tournament => [String(tournament.id), tournament.name]
-    )
-  );
-
-  matchSelect.innerHTML =
-    '<option value="">Select a match</option>';
-
-  matchList.innerHTML = "";
-
-  availableMatches.forEach(match => {
-
-    const home = teamMap.get(String(match.home_team_id)) || "Home Team";
-    const away = teamMap.get(String(match.away_team_id)) || "Away Team";
-
-    const tournament =
-      tournamentMap.get(String(match.tournament_id)) || "Tournament";
-
-    const dateText = match.scheduled_at
-      ? new Date(match.scheduled_at).toLocaleString("en-IN")
-      : "Schedule not set";
-
-    const option = document.createElement("option");
-
-    option.value = match.id;
-
-    option.textContent =
-      "Match #" + match.id + " | " +
-      tournament + " | " +
-      home + " vs " + away + " | " +
-      dateText;
-
-    matchSelect.appendChild(option);
-
-    const item = document.createElement("div");
-
-    item.className = "match-item";
-
-    const title = document.createElement("strong");
-
-    title.textContent = home + " vs " + away;
-
-    const details = document.createElement("p");
-
-    details.textContent =
-      tournament + " | Match ID: " + match.id + " | " + dateText;
-
-    item.appendChild(title);
-    item.appendChild(details);
-
-    matchList.appendChild(item);
-
-  });
-
+$("tournamentForm").onsubmit=async e=>{
+ e.preventDefault();const btn=$("saveTournament");btn.disabled=true;msg("tournamentMessage","Saving tournament...");
+ const duration=Number($("tDuration").value)||null;const half=Number($("tHalf").value)||(duration?Math.floor(duration/2):null);
+ const payload={name:$("tName").value.trim(),organizer_club_id:Number($("tOrganizer").value),edition:$("tEdition").value?Number($("tEdition").value):null,location:$("tLocation").value.trim()||null,address:$("tAddress").value.trim()||null,latitude:$("tLatitude").value?Number($("tLatitude").value):null,longitude:$("tLongitude").value?Number($("tLongitude").value):null,start_date:$("tStart").value||null,end_date:$("tEnd").value||null,entry_fee:$("tEntry").value===""?null:Number($("tEntry").value),registration_team_limit:$("tReportedTeams").value===""?null:Number($("tReportedTeams").value),match_duration_minutes:duration,half_duration_minutes:half,first_prize:$("tFirst").value===""?null:Number($("tFirst").value),second_prize:$("tSecond").value===""?null:Number($("tSecond").value),third_prize:$("tThird").value===""?null:Number($("tThird").value),semifinalist_prize:$("tSemi").value.trim()||null,man_of_the_match_prize:$("tMom").value.trim()||null,rules:$("tRules").value.trim()||null,status:"upcoming",is_published:false};
+ const {error}=await db.from("tournaments").insert(payload);btn.disabled=false;if(error){msg("tournamentMessage","Save failed: "+error.message,"error");return}
+ msg("tournamentMessage","Tournament Draft saved. Tournament-এর তথ্য সংরক্ষিত হয়েছে। এখানে দলের সংখ্যা বাস্তব আয়োজকের দেওয়া তথ্য অনুযায়ী রেকর্ড করা হবে; এই সাইটে দল যোগ না হওয়ার কারণে বাস্তব খেলার অংশগ্রহণে কোনো বাধা তৈরি হবে না।","success");$("tournamentForm").reset();await loadBase();
+};
+$("clearTournament").onclick=()=>$("tournamentForm").reset();
+$("refreshTournaments").onclick=()=>loadBase().catch(e=>msg("tournamentMessage",e.message,"error"));
+$("teamForm").onsubmit=async e=>{
+ e.preventDefault();const btn=$("saveTeam");btn.disabled=true;msg("teamMessage","Adding team...");
+ const tid=Number($("teamTournament").value),club=Number($("teamClub").value),name=$("teamName").value.trim();
+ const tournament=state.tournaments.find(x=>Number(x.id)===tid);if(!tournament||!Number.isInteger(Number(tournament.registration_team_limit))||Number(tournament.registration_team_limit)<1){btn.disabled=false;msg("teamMessage","এই Tournament-এর নির্দিষ্ট দলসংখ্যা আগে সেট করতে হবে।","error");return}const {count:registered,error:countError}=await db.from("tournament_teams").select("id",{count:"exact",head:true}).eq("tournament_id",tid);if(countError){btn.disabled=false;msg("teamMessage",countError.message,"error");return}if(registered>=Number(tournament.registration_team_limit)){btn.disabled=false;msg("teamMessage","রেজিস্ট্রেশন পূর্ণ: এই Tournament-এ ঠিক "+tournament.registration_team_limit+"টি দল নেওয়া হবে।","error");return}const {data:team,error}=await db.from("teams").insert({name,club_id:club}).select("id").single();
+ if(error){btn.disabled=false;msg("teamMessage",error.message,"error");return}
+ const {error:linkError}=await db.from("tournament_teams").insert({tournament_id:tid,team_id:team.id});
+ btn.disabled=false;if(linkError){await db.from("teams").delete().eq("id",team.id);msg("teamMessage",linkError.message,"error");return}
+ msg("teamMessage","Team record saved in Dhalaibol. এখন Player List section থেকে খেলোয়াড়দের তথ্য যোগ করুন।","success");$("teamName").value="";await loadBase();$("rosterTournament").value=tid;await loadRoster();
+};
+$("rosterTournament").onchange=loadRoster;$("refreshTeams").onclick=()=>loadBase().catch(e=>alert(e.message));
+$("positionForm").onsubmit=async e=>{e.preventDefault();const name=$("positionName").value.trim(),bn=$("positionBn").value.trim()||null;const {error}=await db.from("player_position_options").insert({name,display_name_bn:bn,sort_order:state.positions.reduce((a,p)=>Math.max(a,p.sort_order),0)+10});if(error){alert(error.message);return}e.target.reset();await loadBase()};
+function renderPositionOptions(){const host=$("positionList");if(!host)return;host.replaceChildren();state.positions.forEach(p=>{const row=document.createElement("div");row.className="player";row.textContent=(p.display_name_bn||p.name)+" ("+p.name+")";const b=document.createElement("button");b.className="small secondary";b.textContent=p.is_active?"Deactivate":"Activate";b.onclick=async()=>{const {error}=await db.from("player_position_options").update({is_active:!p.is_active}).eq("id",p.id);if(error){alert(error.message);return}await loadBase()};row.append(b);host.append(row)})}
+async function loadRoster(){
+ const tid=Number($("rosterTournament").value);const host=$("teamRoster");host.replaceChildren();if(!tid){host.textContent="Tournament নির্বাচন করুন।";return}
+ const {data:links,error}=await db.from("tournament_teams").select("team_id").eq("tournament_id",tid);if(error){host.textContent=error.message;return}
+ const ids=(links||[]).map(x=>x.team_id);if(!ids.length){host.textContent="এখনও কোনো Team যোগ হয়নি।";return}
+ const teams=state.teams.filter(t=>ids.includes(t.id));
+ for(const t of teams){
+  const club=state.clubs.find(c=>c.id===t.club_id);const {data:players,error:pe}=await db.from("players").select("id,name,position,date_of_birth,status").eq("current_team_id",t.id).order("created_at");
+  const box=document.createElement("div");box.className="item";
+  const head=document.createElement("div");head.className="row";head.innerHTML="<div><strong>"+esc(t.name)+"</strong><div class='note'>"+esc(club?.name||"Club")+"</div></div><span class='pill'>"+(players?.length||0)+" Players</span>";box.append(head);
+  if(pe){const p=document.createElement("p");p.className="error";p.textContent=pe.message;box.append(p)}
+  (players||[]).forEach(p=>{const row=document.createElement("div");row.className="player";row.innerHTML="<span>"+esc(p.name)+"</span><span class='note'>"+esc(p.position||"Position not set")+"</span>";box.append(row)});
+  const capWrap=document.createElement("div");capWrap.className="grid";const capLabel=document.createElement("label");capLabel.textContent="Team Captain";const capSelect=document.createElement("select");capSelect.append(new Option("Captain বেছে নিন",""));(players||[]).forEach(p=>capSelect.append(new Option(p.name,String(p.id))));capSelect.value=t.captain_player_id?String(t.captain_player_id):"";capLabel.append(capSelect);const capBtn=document.createElement("button");capBtn.type="button";capBtn.className="small secondary";capBtn.textContent="Save Captain";capBtn.onclick=async()=>{capBtn.disabled=true;const selected=players.find(p=>String(p.id)===capSelect.value);if(capSelect.value&&!selected){alert("এই Team-এর Player-কে Captain হিসেবে বেছে নিন।");capBtn.disabled=false;return}const {error}=await db.from("teams").update({captain_player_id:selected?selected.id:null}).eq("id",t.id);capBtn.disabled=false;if(error){alert(error.message);return}await loadBase()};capWrap.append(capLabel,capBtn);box.append(capWrap);
+  const form=document.createElement("form");form.className="grid";form.innerHTML='<div><label>Player Name *</label><input name="player" required placeholder="Player full name"></div><div><label>Date of Birth</label><input name="dob" type="date"></div><div><label>Usual / Profile Position *</label><select name="position" required><option value="">পজিশন বেছে নিন</option></select></div><div class="actions" style="grid-column:1/-1"><button class="small">Add Player</button></div><div class="note" style="grid-column:1/-1"></div>';
+  const positionSelect=form.querySelector('[name="position"]');state.positions.filter(p=>p.is_active).forEach(p=>positionSelect.append(new Option((p.display_name_bn||p.name)+" ("+p.name+")",p.name)));
+  form.onsubmit=async e=>{e.preventDefault();const b=form.querySelector("button");b.disabled=true;const fd=new FormData(form);const payload={name:String(fd.get("player")).trim(),position:String(fd.get("position")).trim(),current_team_id:t.id,date_of_birth:String(fd.get("dob")||"")||null};const {data:created,error}=await db.from("players").insert(payload).select("id").single();if(error){form.querySelector(".note").textContent=error.message;b.disabled=false;return}const {error:he}=await db.from("player_team_history").insert({player_id:created.id,team_id:t.id,from_date:new Date().toISOString().slice(0,10)});if(he){const {error:rollbackError}=await db.from("players").delete().eq("id",created.id);form.querySelector(".note").textContent="Player history save failed: "+he.message+(rollbackError?" | Player rollback also failed: "+rollbackError.message:" | Player entry rolled back.");b.disabled=false;return}form.reset();form.querySelector(".note").textContent="Player and team history saved successfully.";await loadRoster()};
+  box.append(form);host.append(box);
+ }
 }
+$("fTournament").onchange=()=>{const tid=Number($("fTournament").value);const linksPromise=db.from("tournament_teams").select("team_id").eq("tournament_id",tid);linksPromise.then(({data,error})=>{if(error){msg("fixtureMessage",error.message,"error");return}const ids=(data||[]).map(x=>x.team_id);optionList($("fHome"),state.teams.filter(t=>ids.includes(t.id)),"Team A বেছে নিন",x=>x.name);optionList($("fAway"),state.teams.filter(t=>ids.includes(t.id)),"Team B বেছে নিন",x=>x.name);const t=state.tournaments.find(x=>x.id===tid);$("fDuration").value=t?.match_duration_minutes||"";$("fHalf").value=t?.half_duration_minutes||""})};
+$("venueForm").onsubmit=async e=>{e.preventDefault();const {error}=await db.from("venues").insert({name:$("venueName").value.trim(),location:$("venueAddress").value.trim()||null,address:$("venueAddress").value.trim()||null,latitude:$("venueLatitude").value?Number($("venueLatitude").value):null,longitude:$("venueLongitude").value?Number($("venueLongitude").value):null});if(error){msg("venueMessage",error.message,"error");return}msg("venueMessage","Venue added.","success");e.target.reset();await loadBase()};
+$("fixtureForm").onsubmit=async e=>{
+ e.preventDefault();const btn=$("saveFixture");btn.disabled=true;msg("fixtureMessage","Saving fixture...");
+ const tid=Number($("fTournament").value),home=Number($("fHome").value),away=Number($("fAway").value);if(home===away){btn.disabled=false;msg("fixtureMessage","একই Team দুবার নির্বাচন করা যাবে না।","error");return}
+ const duration=Number($("fDuration").value)||null,half=Number($("fHalf").value)||(duration?Math.floor(duration/2):null);
+ const local=$("fDate").value+"T"+$("fTime").value+":00+05:30";
+ const payload={tournament_id:tid,home_team_id:home,away_team_id:away,venue_id:Number($("fVenue").value),round:$("fRound").value,match_number:Number($("fNumber").value),scheduled_at:new Date(local).toISOString(),status:"scheduled",is_published:false,match_duration_minutes:duration,half_duration_minutes:half};
+ const {error}=await db.from("matches").insert(payload);btn.disabled=false;if(error){msg("fixtureMessage","Fixture save failed: "+error.message,"error");return}msg("fixtureMessage","Match saved as unpublished. Verify details, then publish it from the match list.","success");await loadBase();
+};
+function renderFixtures(){const host=$("fixtureList");host.replaceChildren();if(!state.matches.length){host.textContent="এখনও কোনো Match তৈরি হয়নি।";return}state.matches.forEach(m=>{const a=state.teams.find(t=>t.id===m.home_team_id)?.name||"Team A",b=state.teams.find(t=>t.id===m.away_team_id)?.name||"Team B",t=state.tournaments.find(x=>x.id===m.tournament_id)?.name||"Tournament",v=state.venues.find(x=>x.id===m.venue_id)?.name||"Venue";const box=document.createElement("div");box.className="item";box.innerHTML="<div class='row'><strong>"+esc(a)+" vs "+esc(b)+"</strong><span class='pill "+(m.is_published?"":"gray")+"'>"+(m.is_published?"Published":"Unpublished")+"</span></div><p class='note'>"+esc(t)+" · "+esc(m.round)+" · "+esc(v)+" · "+new Date(m.scheduled_at).toLocaleString("en-IN")+"</p><button class='small secondary' data-match-pub='"+m.id+"' data-next='"+(!m.is_published)+"'>"+(m.is_published?"Unpublish Match":"Publish Match")+"</button>";host.append(box)});host.querySelectorAll("[data-match-pub]").forEach(b=>b.onclick=async()=>{const {error}=await db.from("matches").update({is_published:b.dataset.next==="true"}).eq("id",Number(b.dataset.matchPub));if(error){alert(error.message);return}await loadBase()})}
+async function renderOperatorMatches(){
+ const active=await db.from("operator_assignments").select("match_id").eq("is_active",true);if(active.error){$("matchList").textContent=active.error.message;return}
+ const assigned=new Set((active.data||[]).map(x=>String(x.match_id)));const available=state.matches.filter(m=>m.status==="scheduled"&&!assigned.has(String(m.id)));
+ optionList($("matchSelect"),available,"Unassigned match বেছে নিন",m=>{const a=state.teams.find(t=>t.id===m.home_team_id)?.name||"Team A",b=state.teams.find(t=>t.id===m.away_team_id)?.name||"Team B";return a+" vs "+b+" · "+new Date(m.scheduled_at).toLocaleString("en-IN")});
+ $("matchList").textContent=available.length?available.length+"টি scheduled match-এ Operator assign করা বাকি।":"কোনো unassigned scheduled match নেই।";
+}
+$("inviteForm").onsubmit=async e=>{e.preventDefault();const b=$("inviteButton");b.disabled=true;msg("inviteMessage","Sending secure invitation...");try{const {data,error}=await db.functions.invoke("admin-invite-operator",{body:{operator_name:$("operatorName").value.trim(),email:$("operatorEmail").value.trim(),match_id:Number($("matchSelect").value)}});if(error)throw error;if(!data?.success)throw Error(data?.error||"Invitation was not completed");msg("inviteMessage","Operator invited and assigned to Match ID "+data.match_id,"success");$("inviteForm").reset();await loadBase()}catch(err){msg("inviteMessage",err.message||"Invitation failed","error")}finally{b.disabled=false}};
+$("refreshMatches")?.addEventListener("click",()=>loadBase().catch(e=>alert(e.message)));
 
-
-// Invite Operator
-
-document.getElementById("inviteForm").addEventListener(
-  "submit",
-  async (event) => {
-
-    event.preventDefault();
-
-    const operatorName =
-      document.getElementById("operatorName").value.trim();
-
-    const operatorEmail =
-      document.getElementById("operatorEmail").value.trim();
-
-    const matchId = Number(matchSelect.value);
-
-    const button = document.getElementById("inviteButton");
-
-    if (!operatorName || !operatorEmail || !matchId) {
-
-      inviteMessage.textContent =
-        "Please enter all details and select a match.";
-
-      return;
-    }
-
-    button.disabled = true;
-
-    inviteMessage.textContent =
-      "Verifying Admin and sending Operator invitation...";
-
-    try {
-
-      // Invoke secured Edge Function.
-      // Supabase automatically attaches the current user session.
-
-      const { data, error } =
-        await supabaseClient.functions.invoke(
-          "admin-invite-operator",
-          {
-            body: {
-              operator_name: operatorName,
-              email: operatorEmail,
-              match_id: matchId
-            }
-          }
-        );
-
-      if (error) {
-
-        let errorText = error.message;
-
-        if (error.context && typeof error.context.json === "function") {
-
-          try {
-
-            const responseData = await error.context.json();
-
-            errorText =
-              responseData.error ||
-              responseData.message ||
-              errorText;
-
-          } catch (_) {}
-
-        }
-
-        throw new Error(errorText);
-      }
-
-      if (!data || data.success !== true) {
-
-        throw new Error(
-          data?.error || "Operator invitation was not completed."
-        );
-
-      }
-
-      inviteMessage.textContent =
-        "Success! Operator invited and assigned to Match ID " +
-        data.match_id + ".";
-
-      document.getElementById("operatorName").value = "";
-      document.getElementById("operatorEmail").value = "";
-
-      await loadScheduledMatches();
-
-    } catch (error) {
-
-      inviteMessage.textContent =
-        "Invitation error: " + error.message;
-
-    } finally {
-
-      button.disabled = false;
-
-    }
-
-  }
-);
-
-
-// Refresh Matches
-
-document.getElementById("refreshMatches").addEventListener(
-  "click",
-  loadScheduledMatches
-);
-
-
-// Sign Out
-
-document.getElementById("logoutButton").addEventListener(
-  "click",
-  async () => {
-
-    const { error } = await supabaseClient.auth.signOut();
-
-    if (error) {
-      alert("Sign out error: " + error.message);
-      return;
-    }
-
-    dashboard.classList.add("hidden");
-    loginCard.classList.remove("hidden");
-
-    loginMessage.textContent = "You have signed out.";
-
-  }
-);
-
-
-// Start Page
-
-checkAdminAccess();
-
+const mapState={target:null,map:null,marker:null,lat:null,lng:null,address:"",label:""};
+function setMapPoint(lat,lng,address="",label=""){
+ mapState.lat=Number(lat);mapState.lng=Number(lng);mapState.address=address;mapState.label=label;
+ if(mapState.marker)mapState.marker.setLatLng([mapState.lat,mapState.lng]);
+ else mapState.marker=L.marker([mapState.lat,mapState.lng],{draggable:true}).addTo(mapState.map).on("dragend",async()=>{const p=mapState.marker.getLatLng();await reverseMapPoint(p.lat,p.lng)});
+ mapState.map.setView([mapState.lat,mapState.lng],16);
+ $("mapPickedText").textContent=(label||address||"Selected pin")+" · "+mapState.lat.toFixed(6)+", "+mapState.lng.toFixed(6);
+}
+async function reverseMapPoint(lat,lng){
+ try{const r=await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+lat+"&lon="+lng);const d=await r.json();setMapPoint(lat,lng,d.display_name||"",d.name||"");}
+ catch{setMapPoint(lat,lng,"","Selected map pin")}
+}
+async function openMapPicker(target){
+ mapState.target=target;
+ mapState.lat=null;mapState.lng=null;mapState.address="";mapState.label="";
+ $("mapPickedText").textContent="এখনও কোনো জায়গা নির্বাচন করা হয়নি";
+ $("mapResults").replaceChildren();
+ $("mapModal").classList.add("open");
+ const input=$(target==="tournament"?"tLocation":"venueAddress");$("mapSearchInput").value=input.value||"";
+ const lat=Number($(target==="tournament"?"tLatitude":"venueLatitude").value),lng=Number($(target==="tournament"?"tLongitude":"venueLongitude").value);
+ if(!mapState.map){mapState.map=L.map("mapCanvas").setView([22.42,87.75],10);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(mapState.map);mapState.map.on("click",e=>reverseMapPoint(e.latlng.lat,e.latlng.lng));}
+ if(mapState.marker){mapState.map.removeLayer(mapState.marker);mapState.marker=null;}
+ setTimeout(()=>{mapState.map.invalidateSize();if(Number.isFinite(lat)&&lat!==0&&Number.isFinite(lng)&&lng!==0){setMapPoint(lat,lng,$(target==="tournament"?"tAddress":"venueAddress").value,input.value);}else{mapState.map.setView([22.42,87.75],10);}},120);
+}
+async function searchMapPlaces(){
+ const q=$("mapSearchInput").value.trim();if(!q)return;
+ $("mapResults").textContent="জায়গা খোঁজা হচ্ছে...";
+ try{
+ const url="https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=7&q="+encodeURIComponent(q);
+ const response=await fetch(url,{headers:{"Accept-Language":"bn,en"}});
+ if(!response.ok)throw Error("Search service এখন পাওয়া যাচ্ছে না");
+ const results=await response.json();const host=$("mapResults");host.replaceChildren();
+ if(!results.length){host.textContent="জায়গাটি পাওয়া যায়নি। ম্যাপে সরাসরি পিন বসান।";return}
+ results.forEach(item=>{const b=document.createElement("button");b.type="button";b.className="map-result";b.textContent=item.display_name;b.onclick=()=>setMapPoint(item.lat,item.lon,item.display_name,item.name||item.display_name.split(",")[0]);host.append(b)});
+ }catch(e){$("mapResults").textContent=e.message+" — ম্যাপে সরাসরি পিন বসাতে পারেন।"}
+}
+$("tMapButton").onclick=()=>openMapPicker("tournament");
+$("venueMapButton").onclick=()=>openMapPicker("venue");
+$("closeMap").onclick=()=>$("mapModal").classList.remove("open");
+$("mapSearchButton").onclick=searchMapPlaces;
+$("mapSearchInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();searchMapPlaces()}});
+$("useMapLocation").onclick=()=>{
+ if(mapState.lat==null||mapState.lng==null){alert("আগে সার্চ রেজাল্ট বেছে নিন অথবা ম্যাপে পিন বসান।");return}
+ const t=mapState.target,loc=mapState.label||mapState.address||mapState.lat.toFixed(5)+", "+mapState.lng.toFixed(5);
+ if(t==="tournament"){$("tLocation").value=loc;$("tAddress").value=mapState.address;$("tLatitude").value=mapState.lat;$("tLongitude").value=mapState.lng;$("tMapStatus").textContent="পিন নির্বাচিত ✓"}
+ else{$("venueAddress").value=mapState.address||loc;$("venueLatitude").value=mapState.lat;$("venueLongitude").value=mapState.lng;$("venueMapStatus").textContent="পিন নির্বাচিত ✓"}
+ $("mapModal").classList.remove("open");
+};
+\n$("loginForm").onsubmit=async e=>{e.preventDefault();const b=$("loginButton");b.disabled=true;msg("loginMessage","Sending Magic Link...");const {error}=await db.auth.signInWithOtp({email:"susantamaji.in@gmail.com",options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname}});b.disabled=false;msg("loginMessage",error?error.message:"Magic Link sent. Email check করুন.",error?"error":"success")};
+async function checkAdmin(){const {data,error}=await db.auth.getUser();if(error||!data.user){msg("loginMessage","Admin email দিয়ে secure Magic Link login করুন।");return}const {data:role,error:re}=await db.from("user_roles").select("role").eq("user_id",data.user.id).eq("role","admin").maybeSingle();if(re||!role){msg("loginMessage",re?.message||"Access denied: Admin role নেই।","error");await db.auth.signOut();return}$("loginCard").classList.add("hidden");$("adminDashboard").classList.remove("hidden");$("adminIdentity").textContent=data.user.email||"Verified Admin";try{await loadBase()}catch(err){alert("Dashboard data load failed: "+err.message)}}
+$("logoutButton").onclick=async()=>{await db.auth.signOut();$("adminDashboard").classList.add("hidden");$("loginCard").classList.remove("hidden");msg("loginMessage","Signed out.")};
+db.auth.onAuthStateChange((event)=>{if(event==="SIGNED_IN")checkAdmin()});checkAdmin();
 </script>
-
-</body>
-</html>
+</body></html>
