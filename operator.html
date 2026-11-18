@@ -112,9 +112,9 @@ function renderLineups(){
    const name=document.createElement("div");name.innerHTML="<strong>"+esc(p.name)+"</strong><div class='note'>Profile: "+esc(p.position||"—")+"</div>";
    const pos=document.createElement("select");pos.className="matchpos";pos.dataset.player=p.id;pos.disabled=!cb.checked;
    pos.append(new Option("Match position বেছে নিন",""));state.positions.forEach(o=>pos.append(new Option((o.display_name_bn||o.name)+" ("+o.name+")",o.name)));
-   pos.value=old?.position||"";const cap=document.createElement("label");cap.className="captain note";const capCb=document.createElement("input");capCb.type="checkbox";capCb.className="cap";capCb.dataset.player=p.id;capCb.checked=!!old?.is_captain;cap.append(capCb,document.createTextNode(" Captain"));
-   cb.onchange=()=>{pos.disabled=!cb.checked;if(!cb.checked)capCb.checked=false};
-   row.append(cb,name,pos,cap);box.append(row);
+   pos.value=old?.position||"";const role=document.createElement("select");role.className="matchrole";role.dataset.player=p.id;role.disabled=!cb.checked;role.append(new Option("Starting XI","starting"),new Option("Substitute","substitute"));role.value=old?.lineup_role||"starting";const cap=document.createElement("label");cap.className="captain note";const capCb=document.createElement("input");capCb.type="checkbox";capCb.className="cap";capCb.dataset.player=p.id;capCb.checked=!!old?.is_captain;cap.append(capCb,document.createTextNode(" Captain"));
+   cb.onchange=()=>{pos.disabled=!cb.checked;role.disabled=!cb.checked;if(!cb.checked)capCb.checked=false};
+   row.append(cb,name,pos,role,cap);box.append(row);
   });
   host.append(box);
  }
@@ -127,12 +127,12 @@ $("saveLineups").onclick=async()=>{
   const selected=[...$("lineupTeams").querySelectorAll('.pick[data-team="'+team.id+'"]:checked')];
   if(!selected.length){issue=team.name+": অন্তত একজন খেলোয়াড় নির্বাচন করুন।";break}
   let gk=0;
-  for(const cb of selected){const id=Number(cb.dataset.player),pos=$("lineupTeams").querySelector('.matchpos[data-player="'+id+'"]');const cap=$("lineupTeams").querySelector('.cap[data-player="'+id+'"]');if(!pos.value){issue="প্রত্যেক নির্বাচিত খেলোয়াড়ের Match position নির্বাচন করুন।";break}if(pos.value.toLowerCase()==="goalkeeper")gk++;rows.push({match_id:state.active.id,team_id:team.id,player_id:id,lineup_role:"starting",position:pos.value,is_captain:cap.checked,is_confirmed:true})}
+  for(const cb of selected){const id=Number(cb.dataset.player),pos=$("lineupTeams").querySelector('.matchpos[data-player="'+id+'"]');const cap=$("lineupTeams").querySelector('.cap[data-player="'+id+'"]');const role=$("lineupTeams").querySelector('.matchrole[data-player="'+id+'"]');if(!pos.value){issue="প্রত্যেক নির্বাচিত খেলোয়াড়ের Match position নির্বাচন করুন।";break}if(pos.value.toLowerCase()==="goalkeeper"&&role.value==="starting")gk++;rows.push({match_id:state.active.id,team_id:team.id,player_id:id,lineup_role:role.value,position:pos.value,is_captain:cap.checked,is_confirmed:true})}
   if(issue)break;if(gk!==1){issue=team.name+": ঠিক একজন Goalkeeper নির্বাচন করুন।";break}
   if(rows.filter(x=>x.team_id===team.id&&x.is_captain).length>1){issue=team.name+": একজনের বেশি Captain নির্বাচন করা যাবে না।";break}
  }
  if(issue){btn.disabled=false;message("lineupMsg",issue,"error");return}
- const {error:saveError}=await db.rpc("operator_save_lineup",{p_match_id:state.active.id,p_lineups:rows.map(x=>({team_id:x.team_id,player_id:x.player_id,position:x.position,is_captain:x.is_captain}))});
+ const {error:saveError}=await db.rpc("operator_save_lineup",{p_match_id:state.active.id,p_lineups:rows.map(x=>({team_id:x.team_id,player_id:x.player_id,position:x.position,lineup_role:x.lineup_role,is_captain:x.is_captain}))});
  if(saveError){btn.disabled=false;message("lineupMsg","Lineup save failed: "+saveError.message,"error");return}
  message("lineupMsg","দুই দলের Match-day Lineup confirmed হয়েছে।","success");
  await openMatch(state.active);btn.disabled=false;
