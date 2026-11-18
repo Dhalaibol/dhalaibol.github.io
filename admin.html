@@ -46,7 +46,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 <div class="grid"><div><label>Tournament Name *</label><input id="tName" required placeholder="যেমন: Panskura Cup"></div><div><label>Organizer Club *</label><select id="tOrganizer" required></select></div>
 <div><label>Edition / Year</label><input id="tEdition" type="number" placeholder="2027"></div><div><label>Location</label><input id="tLocation" placeholder="Panskura, Purba Medinipur"></div>
 <div><label>Start Date</label><input id="tStart" type="date"></div><div><label>End Date</label><input id="tEnd" type="date"></div>
-<div><label>Entry Fee (প্রতি টিম) ₹</label><input id="tEntry" type="number" min="0" step="0.01" placeholder="যেমন 1000"></div>
+<div><label>Entry Fee (প্রতি টিম) ₹</label><input id="tEntry" type="number" min="0" step="0.01" placeholder="যেমন 1000"></div><div><label>আয়োজকের জানানো মোট দলের সংখ্যা (শুধু তথ্য)</label><input id="tReportedTeams" type="number" min="1" step="1" placeholder="যেমন 16"><p class="note">শুধু তথ্য হিসেবে থাকবে; বাস্তব খেলায় অংশগ্রহণ আটকাবে না।</p></div>
 <div><label>Match Duration (মিনিট)</label><input id="tDuration" type="number" min="2" placeholder="যেমন 20"></div><div><label>Half Duration (মিনিট)</label><input id="tHalf" type="number" min="1" placeholder="খালি রাখলে অর্ধেক হবে"></div>
 </div>
 <hr><h3>Prize Distribution (₹)</h3><div class="grid"><div><label>First Prize</label><input id="tFirst" type="number" min="0" placeholder="0"></div><div><label>Second Prize</label><input id="tSecond" type="number" min="0" placeholder="0"></div><div><label>Third Prize</label><input id="tThird" type="number" min="0" placeholder="0"></div><div><label>Semifinalist Prize</label><input id="tSemi" type="text" placeholder="যেমন ₹2,000 each"></div><div><label>Man of the Match Prize</label><input id="tMom" type="text" placeholder="যেমন Trophy / ₹500"></div></div>
@@ -58,6 +58,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 <div class="card"><h2>Tournament Team Entry</h2><p class="note">এটি Dhalaibol-এ বাস্তব টুর্নামেন্টের তথ্য নথিভুক্ত করার ধাপ—ক্লাবের নিজস্ব অংশগ্রহণ বা খেলার অনুমতি নেওয়ার রেজিস্ট্রেশন নয়। আয়োজক ক্লাবের কাছ থেকে পাওয়া Team-এর নাম ও তথ্য এখানে যোগ করুন।</p>
 <form id="teamForm"><div class="grid"><div><label>Tournament *</label><select id="teamTournament" required></select></div><div><label>Team Name *</label><input id="teamName" required placeholder="Panskura Youngstar Brigade"></div><div><label>Associated Club *</label><select id="teamClub" required></select></div></div>
 <div class="actions"><button id="saveTeam">Save Team Record</button></div><div id="teamMessage" class="message"></div></form></div>
+<div class="card"><h2>Player Position Options</h2><p class="note">Admin এই তালিকা পরিচালনা করবেন। Player-এর স্বাভাবিক পজিশন এখান থেকে বেছে নেওয়া হবে।</p><form id="positionForm" class="grid"><div><label>Position Name (English)</label><input id="positionName" required></div><div><label>বাংলা নাম</label><input id="positionBn"></div><div class="actions"><button class="small">Add Position</button></div></form><div id="positionList"></div></div>
 <div class="card"><div class="row"><div><h2>Recorded Teams & Player List</h2><p class="note">আয়োজক ক্লাব/দলের কাছ থেকে পাওয়া খেলোয়াড়দের তালিকা ও তাদের স্বাভাবিক পজিশন নথিভুক্ত করুন। কোনো নির্দিষ্ট squad size এখানে ধরে নেওয়া হচ্ছে না।</div><button class="secondary small" id="refreshTeams">Refresh</button></div>
 <label>Select Tournament</label><select id="rosterTournament"></select><div id="teamRoster"></div></div>
 </section>
@@ -80,7 +81,7 @@ const SUPABASE_URL="https://gshaezskvhhudicvpzst.supabase.co";
 const SUPABASE_KEY="sb_publishable_sN0tZnmfNbyCMBqJLbPcgQ_8mttlOhH";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
-const state={clubs:[],tournaments:[],teams:[],venues:[],matches:[]};
+const state={clubs:[],tournaments:[],teams:[],venues:[],matches:[],positions:[]};
 function msg(id,text,kind=""){const el=$(id);el.textContent=text;el.className="message "+kind}
 function optionList(el,items,placeholder,labelFn){el.replaceChildren();const p=document.createElement("option");p.value="";p.textContent=placeholder;el.append(p);items.forEach(x=>{const o=document.createElement("option");o.value=x.id;o.textContent=labelFn(x);el.append(o)})}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
@@ -88,21 +89,22 @@ function tab(name){document.querySelectorAll("[id^=tab-]").forEach(x=>x.classLis
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>tab(b.dataset.tab));
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>tab(b.dataset.go));
 async function loadBase(){
- const [c,t,tm,v,m]=await Promise.all([
+ const [c,t,tm,v,m,po]=await Promise.all([
  db.from("clubs").select("id,name").order("name"),
  db.from("tournaments").select("id,name,organizer_club_id,location,start_date,end_date,entry_fee,first_prize,second_prize,third_prize,semifinalist_prize,man_of_the_match_prize,match_duration_minutes,half_duration_minutes,status,is_published,rules").order("created_at",{ascending:false}),
- db.from("teams").select("id,name,club_id").order("name"),
+ db.from("teams").select("id,name,club_id,captain_player_id").order("name"),
  db.from("venues").select("id,name,location,address").order("name"),
- db.from("matches").select("id,tournament_id,home_team_id,away_team_id,venue_id,round,match_number,scheduled_at,status,is_published,match_duration_minutes,half_duration_minutes").order("scheduled_at")
+ db.from("matches").select("id,tournament_id,home_team_id,away_team_id,venue_id,round,match_number,scheduled_at,status,is_published,match_duration_minutes,half_duration_minutes").order("scheduled_at"),
+ db.from("player_position_options").select("id,name,display_name_bn,sort_order,is_active").order("sort_order")
  ]);
- for(const [r,n] of [[c,"clubs"],[t,"tournaments"],[tm,"teams"],[v,"venues"],[m,"matches"]])if(r.error)throw Error(n+": "+r.error.message);
- Object.assign(state,{clubs:c.data||[],tournaments:t.data||[],teams:tm.data||[],venues:v.data||[],matches:m.data||[]});
+ for(const [r,n] of [[c,"clubs"],[t,"tournaments"],[tm,"teams"],[v,"venues"],[m,"matches"],[po,"positions"]])if(r.error)throw Error(n+": "+r.error.message);
+ Object.assign(state,{clubs:c.data||[],tournaments:t.data||[],teams:tm.data||[],venues:v.data||[],matches:m.data||[],positions:po.data||[]});
  optionList($("tOrganizer"),state.clubs,"আয়োজক ক্লাব বেছে নিন",x=>x.name);
  optionList($("teamClub"),state.clubs,"টিমের সংশ্লিষ্ট ক্লাব বেছে নিন",x=>x.name);
  const ts=state.tournaments;["teamTournament","rosterTournament","fTournament"].forEach(id=>optionList($(id),ts,"Tournament বেছে নিন",x=>x.name));
  optionList($("fVenue"),state.venues,"মাঠ বেছে নিন",x=>x.name+" — "+(x.location||x.address||""));
  $("countTournaments").textContent=ts.length;$("countTeams").textContent=state.teams.length;$("countMatches").textContent=state.matches.length;$("countClubs").textContent=state.clubs.length;
- renderTournaments();renderFixtures();renderOperatorMatches();await loadRoster();
+ renderTournaments();renderFixtures();renderOperatorMatches();renderPositionOptions();await loadRoster();
 }
 function renderTournaments(){
  const host=$("tournamentList");host.replaceChildren();
@@ -120,7 +122,7 @@ function renderTournaments(){
 $("tournamentForm").onsubmit=async e=>{
  e.preventDefault();const btn=$("saveTournament");btn.disabled=true;msg("tournamentMessage","Saving tournament...");
  const duration=Number($("tDuration").value)||null;const half=Number($("tHalf").value)||(duration?Math.floor(duration/2):null);
- const payload={name:$("tName").value.trim(),organizer_club_id:Number($("tOrganizer").value),edition:$("tEdition").value?Number($("tEdition").value):null,location:$("tLocation").value.trim()||null,start_date:$("tStart").value||null,end_date:$("tEnd").value||null,entry_fee:$("tEntry").value===""?null:Number($("tEntry").value),match_duration_minutes:duration,half_duration_minutes:half,first_prize:$("tFirst").value===""?null:Number($("tFirst").value),second_prize:$("tSecond").value===""?null:Number($("tSecond").value),third_prize:$("tThird").value===""?null:Number($("tThird").value),semifinalist_prize:$("tSemi").value.trim()||null,man_of_the_match_prize:$("tMom").value.trim()||null,rules:$("tRules").value.trim()||null,status:"upcoming",is_published:false};
+ const payload={name:$("tName").value.trim(),organizer_club_id:Number($("tOrganizer").value),edition:$("tEdition").value?Number($("tEdition").value):null,location:$("tLocation").value.trim()||null,start_date:$("tStart").value||null,end_date:$("tEnd").value||null,entry_fee:$("tEntry").value===""?null:Number($("tEntry").value),organizer_reported_team_count:$("tReportedTeams").value===""?null:Number($("tReportedTeams").value),match_duration_minutes:duration,half_duration_minutes:half,first_prize:$("tFirst").value===""?null:Number($("tFirst").value),second_prize:$("tSecond").value===""?null:Number($("tSecond").value),third_prize:$("tThird").value===""?null:Number($("tThird").value),semifinalist_prize:$("tSemi").value.trim()||null,man_of_the_match_prize:$("tMom").value.trim()||null,rules:$("tRules").value.trim()||null,status:"upcoming",is_published:false};
  const {error}=await db.from("tournaments").insert(payload);btn.disabled=false;if(error){msg("tournamentMessage","Save failed: "+error.message,"error");return}
  msg("tournamentMessage","Tournament Draft saved. Tournament-এর তথ্য সংরক্ষিত হয়েছে। এখানে দলের সংখ্যা বাস্তব আয়োজকের দেওয়া তথ্য অনুযায়ী রেকর্ড করা হবে; এই সাইটে দল যোগ না হওয়ার কারণে বাস্তব খেলার অংশগ্রহণে কোনো বাধা তৈরি হবে না।","success");$("tournamentForm").reset();await loadBase();
 };
@@ -136,6 +138,8 @@ $("teamForm").onsubmit=async e=>{
  msg("teamMessage","Team record saved in Dhalaibol. এখন Player List section থেকে খেলোয়াড়দের তথ্য যোগ করুন।","success");$("teamName").value="";await loadBase();$("rosterTournament").value=tid;await loadRoster();
 };
 $("rosterTournament").onchange=loadRoster;$("refreshTeams").onclick=()=>loadBase().catch(e=>alert(e.message));
+$("positionForm").onsubmit=async e=>{e.preventDefault();const name=$("positionName").value.trim(),bn=$("positionBn").value.trim()||null;const {error}=await db.from("player_position_options").insert({name,display_name_bn:bn,sort_order:state.positions.reduce((a,p)=>Math.max(a,p.sort_order),0)+10});if(error){alert(error.message);return}e.target.reset();await loadBase()};
+function renderPositionOptions(){const host=$("positionList");if(!host)return;host.replaceChildren();state.positions.forEach(p=>{const row=document.createElement("div");row.className="player";row.textContent=(p.display_name_bn||p.name)+" ("+p.name+")";const b=document.createElement("button");b.className="small secondary";b.textContent=p.is_active?"Deactivate":"Activate";b.onclick=async()=>{const {error}=await db.from("player_position_options").update({is_active:!p.is_active}).eq("id",p.id);if(error){alert(error.message);return}await loadBase()};row.append(b);host.append(row)})}
 async function loadRoster(){
  const tid=Number($("rosterTournament").value);const host=$("teamRoster");host.replaceChildren();if(!tid){host.textContent="Tournament নির্বাচন করুন।";return}
  const {data:links,error}=await db.from("tournament_teams").select("team_id").eq("tournament_id",tid);if(error){host.textContent=error.message;return}
@@ -146,8 +150,10 @@ async function loadRoster(){
   const box=document.createElement("div");box.className="item";
   const head=document.createElement("div");head.className="row";head.innerHTML="<div><strong>"+esc(t.name)+"</strong><div class='note'>"+esc(club?.name||"Club")+"</div></div><span class='pill'>"+(players?.length||0)+" Players</span>";box.append(head);
   if(pe){const p=document.createElement("p");p.className="error";p.textContent=pe.message;box.append(p)}
-  (players||[]).forEach(p=>{const row=document.createElement("div");row.className="player";row.innerHTML="<span>"+esc(p.name)+"</span><span class='note'>"+esc(p.position||"Player")+"</span>";box.append(row)});
-  const form=document.createElement("form");form.className="grid";form.innerHTML='<div><label>Add Player Name</label><input name="player" required placeholder="Player full name"></div><div><label>Position (optional)</label><input name="position" placeholder="আয়োজক/দলের দেওয়া স্বাভাবিক পজিশন"></div><div class="actions" style="grid-column:1/-1"><button class="small">Add Player</button></div><div class="note" style="grid-column:1/-1"></div>';
+  (players||[]).forEach(p=>{const row=document.createElement("div");row.className="player";row.innerHTML="<span>"+esc(p.name)+"</span><span class='note'>"+esc(p.position||"Position not set")+"</span>";box.append(row)});
+  const capWrap=document.createElement("div");capWrap.className="grid";const capLabel=document.createElement("label");capLabel.textContent="Team Captain";const capSelect=document.createElement("select");capSelect.append(new Option("Captain বেছে নিন",""));(players||[]).forEach(p=>capSelect.append(new Option(p.name,String(p.id))));capSelect.value=t.captain_player_id?String(t.captain_player_id):"";capLabel.append(capSelect);const capBtn=document.createElement("button");capBtn.type="button";capBtn.className="small secondary";capBtn.textContent="Save Captain";capBtn.onclick=async()=>{const {error}=await db.from("teams").update({captain_player_id:capSelect.value?Number(capSelect.value):null}).eq("id",t.id);if(error){alert(error.message);return}await loadBase()};capWrap.append(capLabel,capBtn);box.append(capWrap);
+  const form=document.createElement("form");form.className="grid";form.innerHTML='<div><label>Add Player Name</label><input name="player" required placeholder="Player full name"></div><div><label>Usual / Profile Position</label><select name="position"><option value="">পজিশন বেছে নিন</option></select></div><div class="actions" style="grid-column:1/-1"><button class="small">Add Player</button></div><div class="note" style="grid-column:1/-1"></div>';
+  const positionSelect=form.querySelector('[name="position"]');state.positions.filter(p=>p.is_active).forEach(p=>positionSelect.append(new Option((p.display_name_bn||p.name)+" ("+p.name+")",p.name)));
   form.onsubmit=async e=>{e.preventDefault();const b=form.querySelector("button");b.disabled=true;const fd=new FormData(form);const {data:created,error}=await db.from("players").insert({name:String(fd.get("player")).trim(),position:String(fd.get("position")).trim()||null,current_team_id:t.id}).select("id").single();if(error){form.querySelector(".note").textContent=error.message;b.disabled=false;return}const {error:he}=await db.from("player_team_history").insert({player_id:created.id,team_id:t.id,from_date:new Date().toISOString().slice(0,10)});form.querySelector(".note").textContent=he?"Player added; history record issue: "+he.message:"Player added successfully.";await loadRoster()};
   box.append(form);host.append(box);
  }
