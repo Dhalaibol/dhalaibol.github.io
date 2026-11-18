@@ -246,6 +246,11 @@ $("fixtureForm").onsubmit=async e=>{
  e.preventDefault();const btn=$("saveFixture");btn.disabled=true;msg("fixtureMessage","Saving fixture...");
  const tid=Number($("fTournament").value),home=Number($("fHome").value),away=Number($("fAway").value);if(home===away){btn.disabled=false;msg("fixtureMessage","একই Team দুবার নির্বাচন করা যাবে না।","error");return}
  const duration=Number($("fDuration").value)||null,half=Number($("fHalf").value)||(duration?Math.floor(duration/2):null);
+ if(!tid||!home||!away||!Number($("fVenue").value)||!$("fDate").value||!$("fTime").value||!Number($("fNumber").value)){btn.disabled=false;msg("fixtureMessage","ম্যাচের সব বাধ্যতামূলক তথ্য পূরণ করুন।","error");return}
+ if(duration&&half&&half*2>duration){btn.disabled=false;msg("fixtureMessage","দুই Half-এর মোট সময় Match Duration-এর বেশি হতে পারে না।","error");return}
+ const {data:duplicate,error:duplicateError}=await db.from("matches").select("id").eq("tournament_id",tid).eq("match_number",Number($("fNumber").value)).maybeSingle();
+ if(duplicateError){btn.disabled=false;msg("fixtureMessage",duplicateError.message,"error");return}
+ if(duplicate&&String(duplicate.id)!==String(editingMatchId)){btn.disabled=false;msg("fixtureMessage","এই Tournament-এ এই Match Number আগে থেকেই ব্যবহার হয়েছে।","error");return}
  const local=$("fDate").value+"T"+$("fTime").value+":00+05:30";
  const payload={tournament_id:tid,home_team_id:home,away_team_id:away,venue_id:Number($("fVenue").value),round:$("fRound").value,match_number:Number($("fNumber").value),scheduled_at:new Date(local).toISOString(),status:"scheduled",is_published:false,match_duration_minutes:duration,half_duration_minutes:half};
  const existingMatch=editingMatchId?state.matches.find(x=>String(x.id)===String(editingMatchId)):null;
