@@ -326,7 +326,7 @@ async function loadApplications(){
  });
 }
 async function loadReferees(){
- const {data,error}=await db.from("referees").select("id,name,location,status").order("name");const host=$("refereeList");host.replaceChildren();
+ const {data,error}=await db.from("referees").select("id,name,location,status").order("name");state.refereesCache=data||[];const host=$("refereeList");host.replaceChildren();
  if(error){host.textContent=error.message;return}
  const active=(data||[]).filter(x=>x.status==="active");
  optionList($("officialReferee"),active,"রেফারি বেছে নিন",x=>x.name+(x.location?" · "+x.location:""));
