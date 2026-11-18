@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dhalaibol | Admin Dashboard</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--green:#087b43;--deep:#075b32;--ink:#17251c;--muted:#66756b;--line:#e2e9e4;--bg:#f3f7f4;--white:#fff}
@@ -23,12 +24,14 @@ button{border:0;border-radius:10px;background:var(--green);color:white;padding:1
 .message{margin-top:10px;font-size:13px;overflow-wrap:anywhere}.success{color:#137342}.error{color:#b42318}
 details summary{cursor:pointer;font-weight:700}.team-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+.location-tools{display:flex;gap:8px;align-items:center;margin-top:7px}.location-tools button{white-space:nowrap}.map-modal{position:fixed;inset:0;background:#07180fd9;z-index:1000;display:none;align-items:center;justify-content:center;padding:14px}.map-modal.open{display:flex}.map-panel{width:min(900px,100%);background:white;border-radius:18px;padding:16px;box-shadow:0 20px 70px #0005}.map-search{display:flex;gap:8px;margin:10px 0}.map-search input{flex:1;min-width:0}.map-results{max-height:150px;overflow:auto}.map-result{display:block;width:100%;text-align:left;background:#f1f6f2;color:#183b28;border:1px solid #dce9df;margin:5px 0;font-weight:500}.map-canvas{height:min(52vh,440px);min-height:280px;border-radius:12px;z-index:1}.map-footer{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;margin-top:12px}.map-footer button{flex:1}
 @media(max-width:720px){main{padding:12px}.card{padding:15px}.grid,.grid3,.team-grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}header{padding:16px}}
 </style>
 </head>
 <body>
 <header><div class="brand">⚽ DHALAIBOL</div><div class="subtitle">ADMIN MANAGEMENT · TOURNAMENT RECORDS · TEAMS · FIXTURES</div></header>
 <main>
+<div class="map-modal" id="mapModal" role="dialog" aria-modal="true" aria-label="Choose tournament location"><div class="map-panel"><div class="row"><div><h2>ম্যাপে মাঠের সঠিক জায়গা বেছে নিন</h2><p class="note">জায়গার নাম সার্চ করুন অথবা ম্যাপে ট্যাপ করে পিন বসান। পিন টেনে সরানো যাবে।</p></div><button type="button" class="secondary small" id="closeMap">বন্ধ</button></div><div class="map-search"><input id="mapSearchInput" placeholder="মাঠ, ক্লাব বা এলাকার নাম লিখুন"><button type="button" id="mapSearchButton">Search</button></div><div id="mapResults" class="map-results"></div><div id="mapCanvas" class="map-canvas"></div><div class="map-footer"><span class="note" id="mapPickedText">এখনও কোনো জায়গা নির্বাচন করা হয়নি</span><button type="button" id="useMapLocation">এই লোকেশন ব্যবহার করুন</button></div></div></div>
 <section class="card" id="loginCard"><h2>Admin Login</h2><p class="note">নিবন্ধিত Admin ইমেইলে Secure Magic Link পাঠানো হবে।</p>
 <form id="loginForm"><label>Admin Email</label><input id="adminEmail" type="email" value="susantamaji.in@gmail.com" readonly required><p class="note">নির্ধারিত Admin ইমেইল। অন্য ইমেইল দিয়ে Admin Login করা যাবে না।</p><div class="actions"><button id="loginButton">Send Magic Link</button></div></form><div id="loginMessage" class="message"></div></section>
 <section id="adminDashboard" class="hidden">
@@ -44,7 +47,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 <div class="card"><h2>Create Tournament</h2><p class="note">শুরুতে শুধু আয়োজনের তথ্য দিয়েও Tournament Draft হিসেবে রাখা যাবে। Team পরে যোগ হবে।</p>
 <form id="tournamentForm">
 <div class="grid"><div><label>Tournament Name *</label><input id="tName" required placeholder="যেমন: Panskura Cup"></div><div><label>Organizer Club *</label><select id="tOrganizer" required></select></div>
-<div><label>Edition / Year</label><input id="tEdition" type="number" placeholder="2027"></div><div><label>Location</label><input id="tLocation" placeholder="Panskura, Purba Medinipur"></div>
+<div><label>Edition / Year</label><input id="tEdition" type="number" placeholder="2027"></div><div><label>Location / Ground Search</label><input id="tLocation" placeholder="মাঠ, ক্লাব বা এলাকার নাম লিখুন"><div class="location-tools"><button type="button" class="secondary small" id="tMapButton">📍 Map-এ পিন বসান</button><span class="note" id="tMapStatus">লোকেশন ঐচ্ছিক</span></div><input type="hidden" id="tAddress"><input type="hidden" id="tLatitude"><input type="hidden" id="tLongitude"></div>
 <div><label>Start Date</label><input id="tStart" type="date"></div><div><label>End Date</label><input id="tEnd" type="date"></div>
 <div><label>Entry Fee (প্রতি টিম) ₹</label><input id="tEntry" type="number" min="0" step="0.01" placeholder="যেমন 1000"></div><div><label>টুর্নামেন্টে ঠিক কতটি দল নেওয়া হবে? *</label><input id="tReportedTeams" type="number" min="1" step="1" required placeholder="যেমন 16"><p class="note">এই সংখ্যাই Dhalaibol-এ দলের নির্দিষ্ট রেজিস্ট্রেশন সীমা। ১৬ দিলে ১৭তম দল যোগ করা যাবে না।</p></div>
 <div><label>Match Duration (মিনিট)</label><input id="tDuration" type="number" min="2" placeholder="যেমন 20"></div><div><label>Half Duration (মিনিট)</label><input id="tHalf" type="number" min="1" placeholder="খালি রাখলে অর্ধেক হবে"></div>
@@ -69,7 +72,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 <div><label>Match Number *</label><input id="fNumber" type="number" min="1" required></div><div><label>Match Date *</label><input id="fDate" type="date" required></div><div><label>Kick-off Time *</label><input id="fTime" type="time" required></div><div><label>Venue *</label><select id="fVenue" required></select></div>
 <div><label>Match Duration (minutes)</label><input id="fDuration" type="number" min="2"></div><div><label>Half Duration (minutes)</label><input id="fHalf" type="number" min="1"></div></div>
 <div class="actions"><button id="saveFixture">Save Match as Unpublished</button></div><div id="fixtureMessage" class="message"></div></form>
-<hr><h3>Add / Manage Venue</h3><form id="venueForm"><div class="grid"><div><label>Venue Name</label><input id="venueName" required placeholder="Field / Ground name"></div><div><label>Address / Location</label><input id="venueAddress" placeholder="Village, Block, District"></div></div><button class="secondary">Add Venue</button><div id="venueMessage" class="message"></div></form></div>
+<hr><h3>Add / Manage Venue</h3><form id="venueForm"><div class="grid"><div><label>Venue Name</label><input id="venueName" required placeholder="Field / Ground name"></div><div><label>Address / Ground Search</label><input id="venueAddress" placeholder="Village, Block, District"><div class="location-tools"><button type="button" class="secondary small" id="venueMapButton">📍 Map-এ পিন বসান</button><span class="note" id="venueMapStatus">লোকেশন ঐচ্ছিক</span></div><input type="hidden" id="venueLatitude"><input type="hidden" id="venueLongitude"></div></div><button class="secondary">Add Venue</button><div id="venueMessage" class="message"></div></form></div>
 <div class="card"><h2>Created Matches</h2><div id="fixtureList"></div></div>
 </section>
 <section id="tab-operators" class="hidden">
@@ -93,7 +96,7 @@ async function loadBase(){
  db.from("clubs").select("id,name").order("name"),
  db.from("tournaments").select("id,name,organizer_club_id,location,start_date,end_date,entry_fee,first_prize,second_prize,third_prize,semifinalist_prize,man_of_the_match_prize,match_duration_minutes,half_duration_minutes,status,is_published,rules,registration_team_limit").order("created_at",{ascending:false}),
  db.from("teams").select("id,name,club_id,captain_player_id").order("name"),
- db.from("venues").select("id,name,location,address").order("name"),
+ db.from("venues").select("id,name,location,address,latitude,longitude").order("name"),
  db.from("matches").select("id,tournament_id,home_team_id,away_team_id,venue_id,round,match_number,scheduled_at,status,is_published,match_duration_minutes,half_duration_minutes").order("scheduled_at"),
  db.from("player_position_options").select("id,name,display_name_bn,sort_order,is_active").order("sort_order")
  ]);
@@ -122,7 +125,7 @@ function renderTournaments(){
 $("tournamentForm").onsubmit=async e=>{
  e.preventDefault();const btn=$("saveTournament");btn.disabled=true;msg("tournamentMessage","Saving tournament...");
  const duration=Number($("tDuration").value)||null;const half=Number($("tHalf").value)||(duration?Math.floor(duration/2):null);
- const payload={name:$("tName").value.trim(),organizer_club_id:Number($("tOrganizer").value),edition:$("tEdition").value?Number($("tEdition").value):null,location:$("tLocation").value.trim()||null,start_date:$("tStart").value||null,end_date:$("tEnd").value||null,entry_fee:$("tEntry").value===""?null:Number($("tEntry").value),registration_team_limit:$("tReportedTeams").value===""?null:Number($("tReportedTeams").value),match_duration_minutes:duration,half_duration_minutes:half,first_prize:$("tFirst").value===""?null:Number($("tFirst").value),second_prize:$("tSecond").value===""?null:Number($("tSecond").value),third_prize:$("tThird").value===""?null:Number($("tThird").value),semifinalist_prize:$("tSemi").value.trim()||null,man_of_the_match_prize:$("tMom").value.trim()||null,rules:$("tRules").value.trim()||null,status:"upcoming",is_published:false};
+ const payload={name:$("tName").value.trim(),organizer_club_id:Number($("tOrganizer").value),edition:$("tEdition").value?Number($("tEdition").value):null,location:$("tLocation").value.trim()||null,address:$("tAddress").value.trim()||null,latitude:$("tLatitude").value?Number($("tLatitude").value):null,longitude:$("tLongitude").value?Number($("tLongitude").value):null,start_date:$("tStart").value||null,end_date:$("tEnd").value||null,entry_fee:$("tEntry").value===""?null:Number($("tEntry").value),registration_team_limit:$("tReportedTeams").value===""?null:Number($("tReportedTeams").value),match_duration_minutes:duration,half_duration_minutes:half,first_prize:$("tFirst").value===""?null:Number($("tFirst").value),second_prize:$("tSecond").value===""?null:Number($("tSecond").value),third_prize:$("tThird").value===""?null:Number($("tThird").value),semifinalist_prize:$("tSemi").value.trim()||null,man_of_the_match_prize:$("tMom").value.trim()||null,rules:$("tRules").value.trim()||null,status:"upcoming",is_published:false};
  const {error}=await db.from("tournaments").insert(payload);btn.disabled=false;if(error){msg("tournamentMessage","Save failed: "+error.message,"error");return}
  msg("tournamentMessage","Tournament Draft saved. Tournament-এর তথ্য সংরক্ষিত হয়েছে। এখানে দলের সংখ্যা বাস্তব আয়োজকের দেওয়া তথ্য অনুযায়ী রেকর্ড করা হবে; এই সাইটে দল যোগ না হওয়ার কারণে বাস্তব খেলার অংশগ্রহণে কোনো বাধা তৈরি হবে না।","success");$("tournamentForm").reset();await loadBase();
 };
@@ -159,7 +162,7 @@ async function loadRoster(){
  }
 }
 $("fTournament").onchange=()=>{const tid=Number($("fTournament").value);const linksPromise=db.from("tournament_teams").select("team_id").eq("tournament_id",tid);linksPromise.then(({data,error})=>{if(error){msg("fixtureMessage",error.message,"error");return}const ids=(data||[]).map(x=>x.team_id);optionList($("fHome"),state.teams.filter(t=>ids.includes(t.id)),"Team A বেছে নিন",x=>x.name);optionList($("fAway"),state.teams.filter(t=>ids.includes(t.id)),"Team B বেছে নিন",x=>x.name);const t=state.tournaments.find(x=>x.id===tid);$("fDuration").value=t?.match_duration_minutes||"";$("fHalf").value=t?.half_duration_minutes||""})};
-$("venueForm").onsubmit=async e=>{e.preventDefault();const {error}=await db.from("venues").insert({name:$("venueName").value.trim(),location:$("venueAddress").value.trim()||null,address:$("venueAddress").value.trim()||null});if(error){msg("venueMessage",error.message,"error");return}msg("venueMessage","Venue added.","success");e.target.reset();await loadBase()};
+$("venueForm").onsubmit=async e=>{e.preventDefault();const {error}=await db.from("venues").insert({name:$("venueName").value.trim(),location:$("venueAddress").value.trim()||null,address:$("venueAddress").value.trim()||null,latitude:$("venueLatitude").value?Number($("venueLatitude").value):null,longitude:$("venueLongitude").value?Number($("venueLongitude").value):null});if(error){msg("venueMessage",error.message,"error");return}msg("venueMessage","Venue added.","success");e.target.reset();await loadBase()};
 $("fixtureForm").onsubmit=async e=>{
  e.preventDefault();const btn=$("saveFixture");btn.disabled=true;msg("fixtureMessage","Saving fixture...");
  const tid=Number($("fTournament").value),home=Number($("fHome").value),away=Number($("fAway").value);if(home===away){btn.disabled=false;msg("fixtureMessage","একই Team দুবার নির্বাচন করা যাবে না।","error");return}
@@ -177,7 +180,51 @@ async function renderOperatorMatches(){
 }
 $("inviteForm").onsubmit=async e=>{e.preventDefault();const b=$("inviteButton");b.disabled=true;msg("inviteMessage","Sending secure invitation...");try{const {data,error}=await db.functions.invoke("admin-invite-operator",{body:{operator_name:$("operatorName").value.trim(),email:$("operatorEmail").value.trim(),match_id:Number($("matchSelect").value)}});if(error)throw error;if(!data?.success)throw Error(data?.error||"Invitation was not completed");msg("inviteMessage","Operator invited and assigned to Match ID "+data.match_id,"success");$("inviteForm").reset();await loadBase()}catch(err){msg("inviteMessage",err.message||"Invitation failed","error")}finally{b.disabled=false}};
 $("refreshMatches")?.addEventListener("click",()=>loadBase().catch(e=>alert(e.message)));
-$("loginForm").onsubmit=async e=>{e.preventDefault();const b=$("loginButton");b.disabled=true;msg("loginMessage","Sending Magic Link...");const {error}=await db.auth.signInWithOtp({email:"susantamaji.in@gmail.com",options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname}});b.disabled=false;msg("loginMessage",error?error.message:"Magic Link sent. Email check করুন.",error?"error":"success")};
+
+const mapState={target:null,map:null,marker:null,lat:null,lng:null,address:"",label:""};
+function setMapPoint(lat,lng,address="",label=""){
+ mapState.lat=Number(lat);mapState.lng=Number(lng);mapState.address=address;mapState.label=label;
+ if(mapState.marker)mapState.marker.setLatLng([mapState.lat,mapState.lng]);
+ else mapState.marker=L.marker([mapState.lat,mapState.lng],{draggable:true}).addTo(mapState.map).on("dragend",async()=>{const p=mapState.marker.getLatLng();await reverseMapPoint(p.lat,p.lng)});
+ mapState.map.setView([mapState.lat,mapState.lng],16);
+ $("mapPickedText").textContent=(label||address||"Selected pin")+" · "+mapState.lat.toFixed(6)+", "+mapState.lng.toFixed(6);
+}
+async function reverseMapPoint(lat,lng){
+ try{const r=await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+lat+"&lon="+lng);const d=await r.json();setMapPoint(lat,lng,d.display_name||"",d.name||"");}
+ catch{setMapPoint(lat,lng,"","Selected map pin")}
+}
+async function openMapPicker(target){
+ mapState.target=target;$("mapModal").classList.add("open");
+ const input=$(target==="tournament"?"tLocation":"venueAddress");$("mapSearchInput").value=input.value||"";
+ const lat=Number($(target==="tournament"?"tLatitude":"venueLatitude").value),lng=Number($(target==="tournament"?"tLongitude":"venueLongitude").value);
+ if(!mapState.map){mapState.map=L.map("mapCanvas").setView([22.42,87.75],10);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(mapState.map);mapState.map.on("click",e=>reverseMapPoint(e.latlng.lat,e.latlng.lng));}
+ setTimeout(()=>{mapState.map.invalidateSize();if(Number.isFinite(lat)&&lat&&Number.isFinite(lng)&&lng)setMapPoint(lat,lng,$(target==="tournament"?"tAddress":"venueAddress").value,input.value);},120);
+}
+async function searchMapPlaces(){
+ const q=$("mapSearchInput").value.trim();if(!q)return;
+ $("mapResults").textContent="জায়গা খোঁজা হচ্ছে...";
+ try{
+ const url="https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=7&q="+encodeURIComponent(q);
+ const response=await fetch(url,{headers:{"Accept-Language":"bn,en"}});
+ if(!response.ok)throw Error("Search service এখন পাওয়া যাচ্ছে না");
+ const results=await response.json();const host=$("mapResults");host.replaceChildren();
+ if(!results.length){host.textContent="জায়গাটি পাওয়া যায়নি। ম্যাপে সরাসরি পিন বসান।";return}
+ results.forEach(item=>{const b=document.createElement("button");b.type="button";b.className="map-result";b.textContent=item.display_name;b.onclick=()=>setMapPoint(item.lat,item.lon,item.display_name,item.name||item.display_name.split(",")[0]);host.append(b)});
+ }catch(e){$("mapResults").textContent=e.message+" — ম্যাপে সরাসরি পিন বসাতে পারেন।"}
+}
+$("tMapButton").onclick=()=>openMapPicker("tournament");
+$("venueMapButton").onclick=()=>openMapPicker("venue");
+$("closeMap").onclick=()=>$("mapModal").classList.remove("open");
+$("mapSearchButton").onclick=searchMapPlaces;
+$("mapSearchInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();searchMapPlaces()}});
+$("useMapLocation").onclick=()=>{
+ if(mapState.lat==null||mapState.lng==null){alert("আগে সার্চ রেজাল্ট বেছে নিন অথবা ম্যাপে পিন বসান।");return}
+ const t=mapState.target,loc=mapState.label||mapState.address||mapState.lat.toFixed(5)+", "+mapState.lng.toFixed(5);
+ if(t==="tournament"){$("tLocation").value=loc;$("tAddress").value=mapState.address;$("tLatitude").value=mapState.lat;$("tLongitude").value=mapState.lng;$("tMapStatus").textContent="পিন নির্বাচিত ✓"}
+ else{$("venueAddress").value=mapState.address||loc;$("venueLatitude").value=mapState.lat;$("venueLongitude").value=mapState.lng;$("venueMapStatus").textContent="পিন নির্বাচিত ✓"}
+ $("mapModal").classList.remove("open");
+};
+\n$("loginForm").onsubmit=async e=>{e.preventDefault();const b=$("loginButton");b.disabled=true;msg("loginMessage","Sending Magic Link...");const {error}=await db.auth.signInWithOtp({email:"susantamaji.in@gmail.com",options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname}});b.disabled=false;msg("loginMessage",error?error.message:"Magic Link sent. Email check করুন.",error?"error":"success")};
 async function checkAdmin(){const {data,error}=await db.auth.getUser();if(error||!data.user){msg("loginMessage","Admin email দিয়ে secure Magic Link login করুন।");return}const {data:role,error:re}=await db.from("user_roles").select("role").eq("user_id",data.user.id).eq("role","admin").maybeSingle();if(re||!role){msg("loginMessage",re?.message||"Access denied: Admin role নেই।","error");await db.auth.signOut();return}$("loginCard").classList.add("hidden");$("adminDashboard").classList.remove("hidden");$("adminIdentity").textContent=data.user.email||"Verified Admin";try{await loadBase()}catch(err){alert("Dashboard data load failed: "+err.message)}}
 $("logoutButton").onclick=async()=>{await db.auth.signOut();$("adminDashboard").classList.add("hidden");$("loginCard").classList.remove("hidden");msg("loginMessage","Signed out.")};
 db.auth.onAuthStateChange((event)=>{if(event==="SIGNED_IN")checkAdmin()});checkAdmin();
