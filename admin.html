@@ -206,8 +206,7 @@ function renderTournaments(){
  host.querySelectorAll("[data-edit-tournament]").forEach(b=>b.onclick=()=>{
   const t=state.tournaments.find(x=>String(x.id)===b.dataset.editTournament);if(!t)return;
   editingTournamentId=t.id;
-  $("tName").value=t.name||"";$("tOrganizer").value=t.organizer_club_id||"";$("tEdition").value=t.edition||"";$("tFormat").value=t.format||"";
-  $("tLocation").value=t.location||"";$("tAddress").value=t.address||"";$("tLatitude").value=t.latitude||"";$("tLongitude").value=t.longitude||"";
+  $("tName").value=t.name||"";$("tOrganizer").value=t.organizer_club_id||"";
   $("tStart").value=t.start_date||"";$("tEnd").value=t.end_date||"";$("tEntry").value=t.entry_fee??"";
   $("tReportedTeams").value=t.registration_team_limit??"";$("tDuration").value=t.match_duration_minutes??"";$("tHalf").value=t.half_duration_minutes??"";
   $("tFirst").value=t.first_prize??"";$("tSecond").value=t.second_prize??"";$("tThird").value=t.third_prize??"";
